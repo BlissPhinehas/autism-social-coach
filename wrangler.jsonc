@@ -14,6 +14,12 @@
       }
     ]
   },
+  // Serve the built static frontend from the `dist/client` folder so the
+  // worker can forward requests to the ASSETS binding. Wrangler will upload
+  // files from this bucket during deploy.
+  "site": {
+    "bucket": "dist/client"
+  },
   "migrations": [
     {
       "tag": "v1",
