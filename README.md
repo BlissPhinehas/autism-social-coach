@@ -1,233 +1,113 @@
-# 🤖 Chat Agent Starter Kit
+🌲 Forest Friends - Social Skills Helper
 
-![npm i agents command](./npm-agents-banner.svg)
+A safe place for kids to practice talking and making friends, built with love for my brother.
 
-<a href="https://deploy.workers.cloudflare.com/?url=https://github.com/cloudflare/agents-starter"><img src="https://deploy.workers.cloudflare.com/button" alt="Deploy to Cloudflare"/></a>
+Live Demo: [[AI_BOT](https://autism-social-coach-frontend.pages.dev/)]
 
-A starter template for building AI-powered chat agents using Cloudflare's Agent platform, powered by [`agents`](https://www.npmjs.com/package/agents). This project provides a foundation for creating interactive chat experiences with AI, complete with a modern UI and tool integration capabilities.
+💚 Why I Built This
+I have a younger brother with autism, and watching him navigate social situations inspired me to create something that could help. He loves the color green and anything related to forests and nature.
+Sometimes, practicing conversations can feel stressful - worrying about saying the wrong thing or not understanding what someone means. I wanted to build a space where he (and other kids like him) could practice without any pressure. No judgment. No rush. Just a patient friend who's always there to listen and help.
+This app is my way of combining what I love (building things with code) with what matters most (helping my brother feel more confident talking with others).
 
-## Features
+🦊 What This Does
+Forest Friends is a chat app where kids can:
 
-- 💬 Interactive chat interface with AI
-- 🛠️ Built-in tool system with human-in-the-loop confirmation
-- 📅 Advanced task scheduling (one-time, delayed, and recurring via cron)
-- 🌓 Dark/Light theme support
-- ⚡️ Real-time streaming responses
-- 🔄 State management and chat history
-- 🎨 Modern, responsive UI
+Practice saying hello - Learn different ways to greet people
+Talk about feelings - Put words to emotions in a safe way
+Ask questions - Get comfortable with back-and-forth conversations
+Share interests - Talk about things they love without feeling awkward
 
-## Prerequisites
+The app remembers progress and celebrates wins with fun forest badges. Every small step forward gets recognized because every step matters.
 
-- Cloudflare account
-- OpenAI API key
+🎯 How It Helps Kids with Autism
+Kids on the spectrum often benefit from:
 
-## Quick Start
+Predictable patterns - The app responds consistently, no surprises
+Clear, simple language - No confusing idioms or sarcasm
+Visual feedback - Progress bars and badges show growth clearly
+Safe practice space - No real-world pressure, practice at your own pace
+Patience - The AI never gets tired or frustrated
 
-1. Create a new project:
+My brother struggles with abstract language and unexpected changes in conversation. This app keeps things concrete and steady, which helps him feel more comfortable.
 
-```bash
-npx create-cloudflare@latest --template cloudflare/agents-starter
-```
+🌳 The Forest Theme
+The green forest theme isn't just decoration - it's intentional. My brother finds nature calming, and green is his favorite color. When he's overwhelmed, going outside or looking at trees helps him reset.
+I wanted the app to feel like a peaceful walk in the woods - somewhere safe and familiar where he can be himself.
 
-2. Install dependencies:
+🛠️ How I Built It
+I used Cloudflare's platform because it met all the technical requirements for the assignment, but more importantly, it let me build something that actually works and can scale.
+Tech stack:
 
-```bash
+Cloudflare Workers - Runs the backend
+Workers AI (Llama 3.3) - Powers the conversations
+Durable Objects - Remembers each kid's progress
+Cloudflare Pages - Hosts the forest-themed interface
+
+The AI is prompted specifically to use literal, simple language and avoid things that confuse kids with autism (like idioms, sarcasm, or abstract concepts).
+
+🎨 Design Choices
+Everything about the design considers how my brother (and kids like him) experience the world:
+
+Forest animals as progress icons - More engaging than generic checkmarks
+Green color palette - Calming and familiar
+Large, clear buttons - Easy to see and click
+Consistent layout - Nothing moves around unexpectedly
+Simple animations - Fun but not overwhelming
+Clear visual progress - You can SEE yourself improving
+
+
+📊 Sample Conversation
+Forest Friend: Hi there! I'm your forest friend. What's your name?
+
+User: Tommy
+
+Forest Friend: Nice to meet you, Tommy! How old are you?
+
+User: 8
+
+Forest Friend: Cool! I'm here to practice talking. 
+             Want to practice saying hello or talking about feelings?
+
+User: Saying hello
+
+Forest Friend: Great choice! Let's practice. 
+              Hello Tommy! How are you today?
+
+User: Hello! I'm good
+
+Forest Friend: Awesome! You did a really good job saying hello back.
+              [🦊 Badge Earned: First Hello!]
+
+🚀 Running It Yourself
+If you want to run this for your own family member:
+bash# Clone it
+git clone https://github.com/YOUR-USERNAME/autism-social-coach.git
+cd autism-social-coach
+
+# Install stuff
 npm install
-```
 
-3. Set up your environment:
+# Login to Cloudflare (one-time setup)
+wrangler login
 
-Create a `.dev.vars` file:
+# Test it locally
+wrangler dev
 
-```env
-OPENAI_API_KEY=your_openai_api_key
-```
+# Deploy it
+wrangler deploy
+wrangler pages deploy frontend --project-name=forest-friends
 
-4. Run locally:
 
-```bash
-npm start
-```
+🌱 What's Next
+Ideas I'd like to add:
 
-5. Deploy:
+More forest animals - Different animals could teach different skills
+Voice option - Some kids prefer talking over typing
+Parent view - Let parents see weekly progress without interrupting practice
+Story mode - Practice conversations in the context of forest adventures
+Calming exercises - When things feel overwhelming, guided breathing with forest sounds
 
-```bash
-npm run deploy
-```
 
-## Project Structure
-
-```
-├── src/
-│   ├── app.tsx        # Chat UI implementation
-│   ├── server.ts      # Chat agent logic
-│   ├── tools.ts       # Tool definitions
-│   ├── utils.ts       # Helper functions
-│   └── styles.css     # UI styling
-```
-
-## Customization Guide
-
-### Adding New Tools
-
-Add new tools in `tools.ts` using the tool builder:
-
-```ts
-// Example of a tool that requires confirmation
-const searchDatabase = tool({
-  description: "Search the database for user records",
-  parameters: z.object({
-    query: z.string(),
-    limit: z.number().optional()
-  })
-  // No execute function = requires confirmation
-});
-
-// Example of an auto-executing tool
-const getCurrentTime = tool({
-  description: "Get current server time",
-  parameters: z.object({}),
-  execute: async () => new Date().toISOString()
-});
-
-// Scheduling tool implementation
-const scheduleTask = tool({
-  description:
-    "schedule a task to be executed at a later time. 'when' can be a date, a delay in seconds, or a cron pattern.",
-  parameters: z.object({
-    type: z.enum(["scheduled", "delayed", "cron"]),
-    when: z.union([z.number(), z.string()]),
-    payload: z.string()
-  }),
-  execute: async ({ type, when, payload }) => {
-    // ... see the implementation in tools.ts
-  }
-});
-```
-
-To handle tool confirmations, add execution functions to the `executions` object:
-
-```typescript
-export const executions = {
-  searchDatabase: async ({
-    query,
-    limit
-  }: {
-    query: string;
-    limit?: number;
-  }) => {
-    // Implementation for when the tool is confirmed
-    const results = await db.search(query, limit);
-    return results;
-  }
-  // Add more execution handlers for other tools that require confirmation
-};
-```
-
-Tools can be configured in two ways:
-
-1. With an `execute` function for automatic execution
-2. Without an `execute` function, requiring confirmation and using the `executions` object to handle the confirmed action. NOTE: The keys in `executions` should match `toolsRequiringConfirmation` in `app.tsx`.
-
-### Use a different AI model provider
-
-The starting [`server.ts`](https://github.com/cloudflare/agents-starter/blob/main/src/server.ts) implementation uses the [`ai-sdk`](https://sdk.vercel.ai/docs/introduction) and the [OpenAI provider](https://sdk.vercel.ai/providers/ai-sdk-providers/openai), but you can use any AI model provider by:
-
-1. Installing an alternative AI provider for the `ai-sdk`, such as the [`workers-ai-provider`](https://sdk.vercel.ai/providers/community-providers/cloudflare-workers-ai) or [`anthropic`](https://sdk.vercel.ai/providers/ai-sdk-providers/anthropic) provider:
-2. Replacing the AI SDK with the [OpenAI SDK](https://github.com/openai/openai-node)
-3. Using the Cloudflare [Workers AI + AI Gateway](https://developers.cloudflare.com/ai-gateway/providers/workersai/#workers-binding) binding API directly
-
-For example, to use the [`workers-ai-provider`](https://sdk.vercel.ai/providers/community-providers/cloudflare-workers-ai), install the package:
-
-```sh
-npm install workers-ai-provider
-```
-
-Add an `ai` binding to `wrangler.jsonc`:
-
-```jsonc
-// rest of file
-  "ai": {
-    "binding": "AI"
-  }
-// rest of file
-```
-
-Replace the `@ai-sdk/openai` import and usage with the `workers-ai-provider`:
-
-```diff
-// server.ts
-// Change the imports
-- import { openai } from "@ai-sdk/openai";
-+ import { createWorkersAI } from 'workers-ai-provider';
-
-// Create a Workers AI instance
-+ const workersai = createWorkersAI({ binding: env.AI });
-
-// Use it when calling the streamText method (or other methods)
-// from the ai-sdk
-- const model = openai("gpt-4o-2024-11-20");
-+ const model = workersai("@cf/deepseek-ai/deepseek-r1-distill-qwen-32b")
-```
-
-Commit your changes and then run the `agents-starter` as per the rest of this README.
-
-### Modifying the UI
-
-The chat interface is built with React and can be customized in `app.tsx`:
-
-- Modify the theme colors in `styles.css`
-- Add new UI components in the chat container
-- Customize message rendering and tool confirmation dialogs
-- Add new controls to the header
-
-### Example Use Cases
-
-1. **Customer Support Agent**
-   - Add tools for:
-     - Ticket creation/lookup
-     - Order status checking
-     - Product recommendations
-     - FAQ database search
-
-2. **Development Assistant**
-   - Integrate tools for:
-     - Code linting
-     - Git operations
-     - Documentation search
-     - Dependency checking
-
-3. **Data Analysis Assistant**
-   - Build tools for:
-     - Database querying
-     - Data visualization
-     - Statistical analysis
-     - Report generation
-
-4. **Personal Productivity Assistant**
-   - Implement tools for:
-     - Task scheduling with flexible timing options
-     - One-time, delayed, and recurring task management
-     - Task tracking with reminders
-     - Email drafting
-     - Note taking
-
-5. **Scheduling Assistant**
-   - Build tools for:
-     - One-time event scheduling using specific dates
-     - Delayed task execution (e.g., "remind me in 30 minutes")
-     - Recurring tasks using cron patterns
-     - Task payload management
-     - Flexible scheduling patterns
-
-Each use case can be implemented by:
-
-1. Adding relevant tools in `tools.ts`
-2. Customizing the UI for specific interactions
-3. Extending the agent's capabilities in `server.ts`
-4. Adding any necessary external API integrations
-
-## Learn More
 
 - [`agents`](https://github.com/cloudflare/agents/blob/main/packages/agents/README.md)
 - [Cloudflare Agents Documentation](https://developers.cloudflare.com/agents/)
