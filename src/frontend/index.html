@@ -348,6 +348,33 @@
         const messageDiv = document.createElement("div");
         messageDiv.className = `message-bubble flex ${role === "user" ? "justify-end" : "justify-start"}`;
 
+        // Prevent obvious repetition for assistant replies by detecting an
+        // identical previous assistant message and nudging the reply to feel
+        // more interactive (append a friendly suffix or alternate phrasing).
+        if (role === "assistant") {
+          // find the last assistant bubble (justify-start)
+          const bubbles = Array.from(messagesDiv.querySelectorAll('.message-bubble'));
+          let lastAssistantText = null;
+          for (let i = bubbles.length - 1; i >= 0; i--) {
+            const el = bubbles[i];
+            if (el.className.includes('justify-start')) {
+              lastAssistantText = el.textContent && el.textContent.trim();
+              break;
+            }
+          }
+
+          if (lastAssistantText && lastAssistantText === content) {
+            const variants = [
+              " Great job! 🌟",
+              " Can you tell me more about that?",
+              " That was lovely — what happened next?",
+              " You're doing amazing!"
+            ];
+            const suffix = variants[Math.floor(Math.random() * variants.length)];
+            content = content + suffix;
+          }
+        }
+
         const bgColor =
           role === "user"
             ? "bg-gradient-to-r from-purple-500 to-indigo-500 text-white"
