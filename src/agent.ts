@@ -21,24 +21,28 @@ interface ConversationState {
 }
 
 export class SocialSkillsAgent extends Agent {
-  private state: ConversationState = {
-    conversationHistory: [],
-    skillsPracticed: {
-      greetings: 0,
-      emotions: 0,
-      questions: 0,
-      sharing: 0,
-    },
-    badges: [],
-    streak: 0,
-  };
+  // Expose `state` as a ConversationState-backed accessor so TypeScript can
+  // treat the base Agent's `state` accessor as the correct type here.
+  public get state(): ConversationState {
+    return (this as any)._state as ConversationState;
+  }
+
+  public set state(v: ConversationState) {
+    (this as any)._state = v;
+  }
 
   async onStart() {
     // Load existing state from storage
     const savedState = await this.loadState();
-    if (savedState) {
-      this.state = { ...this.state, ...savedState };
-    }
+    const defaultState: ConversationState = {
+      conversationHistory: [],
+      skillsPracticed: { greetings: 0, emotions: 0, questions: 0, sharing: 0 },
+      badges: [],
+      streak: 0
+    };
+
+    // Assign to the base Agent's state (type from base may be different)
+    this.state = savedState ? { ...defaultState, ...savedState } : defaultState;
   }
 
   async chat(message: string, metadata?: { parentMode?: boolean }) {
@@ -48,7 +52,7 @@ export class SocialSkillsAgent extends Agent {
     this.state.conversationHistory.push({
       role: "user",
       content: message,
-      timestamp,
+      timestamp
     });
 
     // Detect if this is setup/parent mode
@@ -66,7 +70,7 @@ export class SocialSkillsAgent extends Agent {
     this.state.conversationHistory.push({
       role: "assistant",
       content: response,
-      timestamp: Date.now(),
+      timestamp: Date.now()
     });
 
     // Update streak
@@ -83,16 +87,16 @@ export class SocialSkillsAgent extends Agent {
       newBadges,
       progress: this.state.skillsPracticed,
       badges: this.state.badges,
-      streak: this.state.streak,
+      streak: this.state.streak
     };
   }
 
   private async handleSetup(message: string) {
-    const lowerMsg = message.toLowerCase();
-    
     // Extract child info
     if (!this.state.childName) {
-      const nameMatch = message.match(/(?:name is |called |i'm |im |my name is )([\w]+)/i);
+      const nameMatch = message.match(
+        /(?:name is |called |i'm |im |my name is )([\w]+)/i
+      );
       if (nameMatch) {
         this.state.childName = nameMatch[1];
       }
@@ -101,7 +105,7 @@ export class SocialSkillsAgent extends Agent {
     if (!this.state.age) {
       const ageMatch = message.match(/(\d+)/);
       if (ageMatch) {
-        this.state.age = parseInt(ageMatch[1]);
+        this.state.age = parseInt(ageMatch[1], 10);
       }
     }
 
@@ -111,13 +115,14 @@ export class SocialSkillsAgent extends Agent {
       return {
         response: `Great! I'm excited to talk with ${this.state.childName}. I'm here to practice social skills together. Would you like to start with greetings, talking about feelings, or asking questions?`,
         setupComplete: true,
-        childName: this.state.childName,
+        childName: this.state.childName
       };
     }
 
     return {
-      response: "Hi! I'm your friendly AI coach. I help kids practice social skills. What's your child's name and age?",
-      setupComplete: false,
+      response:
+        "Hi! I'm your friendly AI coach. I help kids practice social skills. What's your child's name and age?",
+      setupComplete: false
     };
   }
 
@@ -127,17 +132,24 @@ export class SocialSkillsAgent extends Agent {
 
     try {
       // Call Workers AI (Llama 3.3)
-      const response = await this.env.AI.run("@cf/meta/llama-3.3-70b-instruct-fp8-fast", {
-        messages: [
-          { role: "system", content: systemPrompt },
-          ...conversationContext,
-          { role: "user", content: userMessage },
-        ],
-        max_tokens: 200,
-        temperature: 0.7,
-      });
+      const response = await this.env.AI.run(
+        "@cf/meta/llama-3.3-70b-instruct-fp8-fast",
+        {
+          messages: [
+            { role: "system", content: systemPrompt },
+            ...conversationContext,
+            { role: "user", content: userMessage }
+          ],
+          max_tokens: 200,
+          temperature: 0.7
+        }
+      );
 
-      return response.response || "I'm here to help! Can you tell me more?";
+      // The Workers AI SDK may return a string or an object; normalize to string
+      if (typeof response === "string") return response;
+      // @ts-ignore - normalize unknown response shape
+      if ((response as any)?.response) return (response as any).response;
+      return String(response) || "I'm here to help! Can you tell me more?";
     } catch (error) {
       console.error("AI Error:", error);
       return "I'm listening! Tell me more about that.";
@@ -166,12 +178,10 @@ Be warm, patient, and supportive. Keep responses under 2-3 sentences.`;
   }
 
   private getRecentContext() {
-    return this.state.conversationHistory
-      .slice(-6)
-      .map((msg) => ({
-        role: msg.role,
-        content: msg.content,
-      }));
+    return this.state.conversationHistory.slice(-6).map((msg) => ({
+      role: msg.role,
+      content: msg.content
+    }));
   }
 
   private trackSkills(userMessage: string, aiResponse: string) {
@@ -216,7 +226,7 @@ Be warm, patient, and supportive. Keep responses under 2-3 sentences.`;
       { name: "Question Asker ❓", condition: skills.questions >= 5 },
       { name: "Great Sharer 🎯", condition: skills.sharing >= 5 },
       { name: "3-Day Streak 🔥", condition: this.state.streak >= 3 },
-      { name: "Week Warrior 🏆", condition: this.state.streak >= 7 },
+      { name: "Week Warrior 🏆", condition: this.state.streak >= 7 }
     ];
 
     badges.forEach((badge) => {
@@ -237,7 +247,7 @@ Be warm, patient, and supportive. Keep responses under 2-3 sentences.`;
       skillsPracticed: this.state.skillsPracticed,
       badges: this.state.badges,
       streak: this.state.streak,
-      recentHistory: this.state.conversationHistory.slice(-10),
+      recentHistory: this.state.conversationHistory.slice(-10)
     };
   }
 
@@ -246,10 +256,14 @@ Be warm, patient, and supportive. Keep responses under 2-3 sentences.`;
     await this.saveState();
 
     const exercises: Record<string, string> = {
-      greetings: "Let's practice saying hello! I'll start: Hello! How are you today?",
-      emotions: "Let's talk about feelings. Can you tell me about a time you felt really happy?",
-      questions: "Let's practice asking questions. I'll tell you about my day, and you can ask me questions about it!",
-      sharing: "Let's practice sharing! Tell me about something you really like.",
+      greetings:
+        "Let's practice saying hello! I'll start: Hello! How are you today?",
+      emotions:
+        "Let's talk about feelings. Can you tell me about a time you felt really happy?",
+      questions:
+        "Let's practice asking questions. I'll tell you about my day, and you can ask me questions about it!",
+      sharing:
+        "Let's practice sharing! Tell me about something you really like."
     };
 
     return exercises[exerciseType] || exercises.greetings;
@@ -272,4 +286,3 @@ Be warm, patient, and supportive. Keep responses under 2-3 sentences.`;
     return this.state;
   }
 }
-
