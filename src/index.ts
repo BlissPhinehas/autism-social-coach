@@ -123,8 +123,27 @@ export default {
     }
 
     // Serve static frontend (if using Pages)
-    if (env.ASSETS) {
-      return env.ASSETS.fetch(request);
+    // If the request is not for our API, proxy it to the Pages-hosted static
+    // frontend. This works around client-side TLS issues some users experience
+    // when connecting directly to the Pages domain: the browser talks to the
+    // Worker (which has a valid TLS endpoint) and the Worker fetches the Pages
+    // content from Cloudflare and returns it.
+    if (request.method === "GET" && !url.pathname.startsWith("/api")) {
+      const pagesOrigin = "https://2891087f.autism-social-coach.pages.dev";
+      const pagesUrl = pagesOrigin + url.pathname + url.search;
+      try {
+        const resp = await fetch(pagesUrl, {
+          headers: request.headers,
+          redirect: 'manual'
+        });
+        // Return the fetched response directly (preserves content-type, etc.)
+        return resp;
+      } catch (err) {
+        return new Response(JSON.stringify({ error: 'Failed to fetch frontend' }), {
+          status: 502,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
     }
 
     // Default response
