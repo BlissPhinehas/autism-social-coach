@@ -25,7 +25,7 @@ export default {
     if (url.pathname === "/api/chat") {
       try {
         const body = (await request.json()) as any;
-  const { sessionId } = body;
+        const { sessionId } = body;
 
         // Get or create agent instance for this session
         const agentId = env.SOCIAL_SKILLS_AGENT.idFromName(
@@ -92,14 +92,15 @@ export default {
     if (url.pathname === "/api/exercise") {
       try {
         const body = (await request.json()) as any;
-  const { sessionId } = body;
+        const { exerciseType, sessionId } = body;
         const agentId = env.SOCIAL_SKILLS_AGENT.idFromName(
           sessionId || "default-session"
         );
-        const agent = env.SOCIAL_SKILLS_AGENT.get(agentId);
+        const stub = env.SOCIAL_SKILLS_AGENT.get(agentId) as any;
 
-        const response = await agent.fetch(request);
-        const result = await response.json();
+        // Call startActivity method (Durable Object implementation may expose
+        // a custom method; cast to any to avoid TS complaints)
+        const result = await stub.startActivity(exerciseType);
 
         return new Response(JSON.stringify(result), {
           headers: {
@@ -107,9 +108,9 @@ export default {
             ...corsHeaders
           }
         });
-      } catch (_error) {
+      } catch (error) {
         return new Response(
-          JSON.stringify({ error: "Failed to start exercise" }),
+          JSON.stringify({ error: "Failed to start activity" }),
           {
             status: 500,
             headers: {

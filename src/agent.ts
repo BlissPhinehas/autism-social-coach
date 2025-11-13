@@ -8,91 +8,72 @@ interface ConversationState {
     content: string;
     timestamp: number;
   }>;
-  skillsPracticed: {
-    greetings: number;
-    emotions: number;
-    questions: number;
-    sharing: number;
-  };
-  currentExercise?: string;
-  badges: string[];
-  streak: number;
+  currentActivity?: string;
+  activitiesCompleted: string[];
   lastInteraction?: number;
+  preferences: {
+    lovesMath: boolean;
+    favoriteColor?: string;
+    interests: string[];
+  };
 }
 
 export class SocialSkillsAgent extends Agent {
-  // Expose `state` as a ConversationState-backed accessor so TypeScript can
-  // treat the base Agent's `state` accessor as the correct type here.
-  public get state(): ConversationState {
-    return (this as any)._state as ConversationState;
+  // Keep state compatible with the base Agent type by using a permissive any
+  // instance property. This avoids incorrect visibility/override errors with
+  // the Agent base class while still allowing a structured default value.
+  // Use accessors to read/write the Agent's internal state so we don't
+  // conflict with the base class' `state` accessor definition.
+  public get state(): any {
+    return (this as any)._state;
   }
 
-  public set state(v: ConversationState) {
+  public set state(v: any) {
     (this as any)._state = v;
   }
 
   async onStart() {
-    // Load existing state from storage
     const savedState = await this.loadState();
-    const defaultState: ConversationState = {
-      conversationHistory: [],
-      skillsPracticed: { greetings: 0, emotions: 0, questions: 0, sharing: 0 },
-      badges: [],
-      streak: 0
-    };
-
-    // Assign to the base Agent's state (type from base may be different)
-    this.state = savedState ? { ...defaultState, ...savedState } : defaultState;
+    if (savedState) {
+      this.state = { ...this.state, ...savedState };
+    }
   }
 
   async chat(message: string, metadata?: { parentMode?: boolean }) {
     const timestamp = Date.now();
 
-    // Add user message to history
     this.state.conversationHistory.push({
       role: "user",
       content: message,
       timestamp
     });
 
-    // Detect if this is setup/parent mode
+    // Setup mode
     if (metadata?.parentMode || !this.state.childName) {
       return await this.handleSetup(message);
     }
 
-    // Generate AI response using Workers AI
     const response = await this.generateResponse(message);
 
-    // Track skills practiced
-    this.trackSkills(message, response);
-
-    // Add assistant message to history
     this.state.conversationHistory.push({
       role: "assistant",
       content: response,
       timestamp: Date.now()
     });
 
-    // Update streak
-    this.updateStreak();
-
-    // Check for new badges
-    const newBadges = this.checkForNewBadges();
-
-    // Save state
+    this.state.lastInteraction = Date.now();
     await this.saveState();
 
     return {
       response,
-      newBadges,
-      progress: this.state.skillsPracticed,
-      badges: this.state.badges,
-      streak: this.state.streak
+      currentActivity: this.state.currentActivity,
+      activitiesCompleted: this.state.activitiesCompleted
     };
   }
 
   private async handleSetup(message: string) {
-    // Extract child info
+    const lowerMsg = message.toLowerCase();
+
     if (!this.state.childName) {
       const nameMatch = message.match(
         /(?:name is |called |i'm |im |my name is )([\w]+)/i
@@ -105,23 +86,31 @@ export class SocialSkillsAgent extends Agent {
     if (!this.state.age) {
       const ageMatch = message.match(/(\d+)/);
       if (ageMatch) {
-        this.state.age = parseInt(ageMatch[1], 10);
+        this.state.age = parseInt(ageMatch[1]);
       }
+    }
+
+    // Detect preferences
+    if (lowerMsg.includes("math") || lowerMsg.includes("numbers")) {
+      this.state.preferences.lovesMath = true;
+    }
+
+    if (lowerMsg.includes("green")) {
+      this.state.preferences.favoriteColor = "green";
     }
 
     await this.saveState();
 
     if (this.state.childName && this.state.age) {
       return {
-        response: `Great! I'm excited to talk with ${this.state.childName}. I'm here to practice social skills together. Would you like to start with greetings, talking about feelings, or asking questions?`,
+        response: `Hi ${this.state.childName}! I'm so happy to meet you! I'm your forest friend and I'm here to do fun things with you. Ready to start?`,
         setupComplete: true,
         childName: this.state.childName
       };
     }
 
     return {
-      response:
-        "Hi! I'm your friendly AI coach. I help kids practice social skills. What's your child's name and age?",
+      response: "Hi! What's your name?",
       setupComplete: false
     };
   }
@@ -131,7 +120,6 @@ export class SocialSkillsAgent extends Agent {
     const conversationContext = this.getRecentContext();
 
     try {
-      // Call Workers AI (Llama 3.3)
       const response = await this.env.AI.run(
         "@cf/meta/llama-3.3-70b-instruct-fp8-fast",
         {
@@ -140,103 +128,100 @@ export class SocialSkillsAgent extends Agent {
             ...conversationContext,
             { role: "user", content: userMessage }
           ],
-          max_tokens: 200,
-          temperature: 0.7
+          max_tokens: 150,
+          temperature: 0.8
         }
       );
 
-      // The Workers AI SDK may return a string or an object; normalize to string
+      // Normalize the SDK response: it may return a plain string or an
+      // object with a `response` property depending on runtime. Handle both.
       if (typeof response === "string") return response;
-      // @ts-ignore - normalize unknown response shape
       if ((response as any)?.response) return (response as any).response;
-      return String(response) || "I'm here to help! Can you tell me more?";
+      return String(response) || "That's great! What else?";
     } catch (error) {
       console.error("AI Error:", error);
-      return "I'm listening! Tell me more about that.";
+      return "I'm listening! Keep going!";
     }
   }
 
   private buildSystemPrompt(): string {
     const childName = this.state.childName || "friend";
     const age = this.state.age || 8;
+    const lovesMath = this.state.preferences.lovesMath;
+    const activity = this.state.currentActivity;
 
-    return `You are a friendly, patient AI social skills coach helping ${childName} (age ${age}) practice social interactions.
+    let activityContext = "";
 
-IMPORTANT RULES:
-- Use simple, clear, literal language appropriate for age ${age}
-- Avoid idioms, sarcasm, or abstract concepts
-- Be predictable and encouraging
-- One topic at a time, 2-3 sentences max
-- Celebrate small wins with enthusiasm
-- If the child seems confused, rephrase more simply
-- Practice these skills: greetings, emotions, asking questions, sharing
+    if (activity === "morning-routine") {
+      activityContext = `You are helping ${childName} with their morning routine. Guide them step by step through brushing teeth, getting dressed, eating breakfast. Use encouraging language like "Great job!" and "You're doing amazing!". Ask them to confirm when each step is done.`;
+    } else if (activity === "math-fun") {
+      activityContext = `You are doing math with ${childName}. Ask simple addition or subtraction problems appropriate for age ${age}. Celebrate correct answers enthusiastically. If wrong, gently guide them. Make it fun with forest animals (like "If you have 3 squirrels and 2 more come, how many squirrels?").`;
+    } else if (activity === "praise-time") {
+      activityContext = `This is praise time. Ask ${childName} what they did well today. Celebrate their achievements enthusiastically. Use specific praise like "You did such a good job brushing your teeth!" Ask follow up questions about what made them proud.`;
+    } else if (activity === "feelings-check") {
+      activityContext = `Help ${childName} identify and name their feelings. Ask "How are you feeling right now?" with specific emotion words as examples. If they're upset, acknowledge it and help them describe it. Be warm and validating.`;
+    } else if (activity === "story-time") {
+      activityContext = `Tell ${childName} a very short story about forest animals. Keep it to 3-4 sentences. Then ask them a simple question about it. Make it interactive and fun.`;
+    } else {
+      activityContext = `Have a friendly conversation with ${childName}. Ask specific questions about their day, their interests, or what they're doing. Be warm and engaging like a caring friend.`;
+    }
 
-Current focus: ${this.state.currentExercise || "general conversation"}
-Skills practiced: Greetings: ${this.state.skillsPracticed.greetings}, Emotions: ${this.state.skillsPracticed.emotions}
+    return `You are a patient, warm friend talking with ${childName}, who is ${age} years old and has autism.
 
-Be warm, patient, and supportive. Keep responses under 2-3 sentences.`;
+CRITICAL RULES:
+- Use simple, concrete words. No idioms or sarcasm.
+- Be encouraging and positive - celebrate everything!
+- Speak like you're talking to a young child: warm, gentle, excited for them
+- Keep responses to 1-2 short sentences
+- Ask ONE specific question at a time, never multiple
+- ${lovesMath ? "This child loves math - include numbers when possible!" : ""}
+- Never say "tell me more" - ask specific questions instead
+- Use their name sometimes to keep it personal
+
+CURRENT ACTIVITY: ${activity || "general conversation"}
+${activityContext}
+
+Tone: Like a kind teacher or loving parent - warm, clear, enthusiastic, patient.`;
   }
 
   private getRecentContext() {
-    return this.state.conversationHistory.slice(-6).map((msg) => ({
+    return this.state.conversationHistory.slice(-8).map((msg: any) => ({
       role: msg.role,
       content: msg.content
     }));
   }
 
-  private trackSkills(userMessage: string, aiResponse: string) {
-    const lower = userMessage.toLowerCase();
+  async startActivity(activityType: string) {
+    this.state.currentActivity = activityType;
+    await this.saveState();
 
-    if (lower.match(/hello|hi|hey|good morning|good afternoon|howdy/)) {
-      this.state.skillsPracticed.greetings++;
-    }
-    if (lower.match(/feel|sad|happy|angry|scared|excited|worried|mad|glad/)) {
-      this.state.skillsPracticed.emotions++;
-    }
-    if (lower.includes("?") || lower.match(/what|why|how|when|where|who/)) {
-      this.state.skillsPracticed.questions++;
-    }
-    if (lower.match(/i like|my favorite|i enjoy|i think|i love|i want/)) {
-      this.state.skillsPracticed.sharing++;
-    }
+    const activities: Record<string, string> = {
+      "morning-routine": `Good morning ${this.state.childName}! Let's do your morning routine together. First, did you brush your teeth yet?`,
+      "math-fun": `Math time! 🌲 Here's a fun one: If you have 2 apples and I give you 3 more apples, how many apples do you have?`,
+      "praise-time": `You're doing so great! Tell me one thing you did really well today. I want to celebrate with you!`,
+      "feelings-check": `How are you feeling right now? Are you happy, excited, tired, or maybe something else?`,
+      "story-time": `Story time! 🦊 Once upon a time, a little fox got lost in the forest. He felt scared. Then a friendly owl helped him find his way home! How do you think the fox felt when he got home?`
+    };
+
+    return {
+      response:
+        activities[activityType] ||
+        `Let's do something fun together, ${this.state.childName}!`,
+      currentActivity: activityType
+    };
   }
 
-  private updateStreak() {
-    const now = Date.now();
-    const lastTime = this.state.lastInteraction || 0;
-    const hoursSince = (now - lastTime) / (1000 * 60 * 60);
+  async completeActivity() {
+    if (this.state.currentActivity) {
+      this.state.activitiesCompleted.push(this.state.currentActivity);
+      this.state.currentActivity = undefined;
+      await this.saveState();
 
-    if (hoursSince < 48) {
-      this.state.streak++;
-    } else {
-      this.state.streak = 1;
+      return {
+        response: `Awesome job! You completed that activity! 🌟`,
+        activitiesCompleted: this.state.activitiesCompleted
+      };
     }
-
-    this.state.lastInteraction = now;
-  }
-
-  private checkForNewBadges(): string[] {
-    const newBadges: string[] = [];
-    const skills = this.state.skillsPracticed;
-
-    const badges = [
-      { name: "First Hello 👋", condition: skills.greetings >= 1 },
-      { name: "Greeting Master 🌟", condition: skills.greetings >= 10 },
-      { name: "Feelings Explorer 💭", condition: skills.emotions >= 5 },
-      { name: "Question Asker ❓", condition: skills.questions >= 5 },
-      { name: "Great Sharer 🎯", condition: skills.sharing >= 5 },
-      { name: "3-Day Streak 🔥", condition: this.state.streak >= 3 },
-      { name: "Week Warrior 🏆", condition: this.state.streak >= 7 }
-    ];
-
-    badges.forEach((badge) => {
-      if (badge.condition && !this.state.badges.includes(badge.name)) {
-        newBadges.push(badge.name);
-        this.state.badges.push(badge.name);
-      }
-    });
-
-    return newBadges;
   }
 
   async getProgress() {
@@ -244,29 +229,10 @@ Be warm, patient, and supportive. Keep responses under 2-3 sentences.`;
       childName: this.state.childName,
       age: this.state.age,
       totalConversations: this.state.conversationHistory.length,
-      skillsPracticed: this.state.skillsPracticed,
-      badges: this.state.badges,
-      streak: this.state.streak,
-      recentHistory: this.state.conversationHistory.slice(-10)
+      activitiesCompleted: this.state.activitiesCompleted,
+      currentActivity: this.state.currentActivity,
+      preferences: this.state.preferences
     };
-  }
-
-  async startExercise(exerciseType: string) {
-    this.state.currentExercise = exerciseType;
-    await this.saveState();
-
-    const exercises: Record<string, string> = {
-      greetings:
-        "Let's practice saying hello! I'll start: Hello! How are you today?",
-      emotions:
-        "Let's talk about feelings. Can you tell me about a time you felt really happy?",
-      questions:
-        "Let's practice asking questions. I'll tell you about my day, and you can ask me questions about it!",
-      sharing:
-        "Let's practice sharing! Tell me about something you really like."
-    };
-
-    return exercises[exerciseType] || exercises.greetings;
   }
 
   private async saveState() {
@@ -282,7 +248,6 @@ Be warm, patient, and supportive. Keep responses under 2-3 sentences.`;
   }
 
   private async getState(): Promise<any> {
-    // Retrieve from Durable Object storage
     return this.state;
   }
 }

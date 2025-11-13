@@ -1,6 +1,7 @@
 {
   "name": "autism-social-coach",
   "main": "src/index.ts",
+  "compatibility_flags": ["nodejs_compat"],
   "compatibility_date": "2024-11-01",
   "ai": {
     "binding": "AI"
