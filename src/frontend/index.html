@@ -1,464 +1,364 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>🌟 Forest Adventure - Practice Talking</title>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Forest Friend</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-      /* Base for 3D effect on cards */
-      .interactive-scene {
-        perspective: 1000px;
-      }
+        @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap');
 
-      /* Subtle 3D lift on hover */
-      .card-3d-lift {
-        transition:
-          transform 0.3s ease-out,
-          box-shadow 0.3s ease-out;
-        transform: translateZ(0);
-        /* Ensure element is on its own layer for 3D */
-        box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
-      }
-
-      .card-3d-lift:hover {
-        transform: translateZ(20px) scale(1.02);
-        box-shadow: 0 20px 30px rgba(0, 0, 0, 0.25);
-      }
-
-      /* Interactive Button Base for sensory feedback */
-      .interactive-button {
-        transition: all 0.1s ease;
-        transform: translateZ(0);
-      }
-
-      .interactive-button:hover {
-        transform: translateZ(5px);
-        box-shadow: 0 5px 0px rgba(0, 0, 0, 0.1);
-      }
-
-      .interactive-button:active {
-        transform: translateZ(0) translateY(2px);
-        /* Provides a clear 'press' feeling */
-        box-shadow: 0 0px 0px rgba(0, 0, 0, 0.1);
-      }
-
-      /* Floating and Wiggling Animations */
-      @keyframes float {
-        0%,
-        100% {
-          transform: translateY(0px) translateZ(0);
+        * {
+            font-family: 'Fredoka', sans-serif;
         }
 
-        50% {
-          transform: translateY(-8px) translateZ(5px);
-        }
-      }
-
-      @keyframes wiggle {
-        0%,
-        100% {
-          transform: rotate(-2deg);
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background-attachment: fixed;
         }
 
-        50% {
-          transform: rotate(2deg);
+        .glass-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border: 2px solid rgba(255, 255, 255, 0.3);
         }
-      }
 
-      .float-animation {
-        animation: float 3.5s ease-in-out infinite;
-      }
+        .activity-card {
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
 
-      .wiggle-animation {
-        animation: wiggle 2s ease-in-out infinite;
-      }
+        .activity-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+        }
 
-      /* Background */
-      body {
-        background: linear-gradient(to bottom, #c6f6d5 0%, #68d391 100%);
-        /* Lighter, friendlier green */
-        background-attachment: fixed;
-        font-family: "Arial", sans-serif;
-        /* Clearer font choice */
-      }
+        .message-bubble {
+            animation: slideIn 0.3s ease-out;
+        }
 
-      .forest-card {
-        background: rgba(255, 255, 255, 0.98);
-        /* Near-white for high contrast */
-        backdrop-filter: blur(8px);
-      }
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
 
-      .message-user {
-        background: linear-gradient(135deg, #63b3ed 0%, #4299e1 100%);
-        /* Clear, solid color */
-        border-color: #3182ce;
-      }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
 
-      .message-assistant {
-        background: linear-gradient(135deg, #f6e05e 0%, #f6ad55 100%);
-        /* Warm, friendly color */
-        border-color: #dd6b20;
-      }
+        .forest-bg {
+            background: linear-gradient(to bottom, #a8e6cf 0%, #6fb583 100%);
+        }
+
+        .chat-container {
+            background: linear-gradient(to bottom, #f0f9ff 0%, #e0f2fe 100%);
+        }
     </style>
-  </head>
+</head>
 
-  <body class="min-h-screen">
-    <div id="app" class="max-w-6xl mx-auto p-4 relative z-10 interactive-scene">
-      <div
-        class="forest-card rounded-[3rem] shadow-2xl p-6 mb-6 border-6 border-green-500 card-3d-lift"
-      >
-        <div class="flex items-center justify-between flex-wrap gap-4">
-          <div class="flex items-center gap-4">
-            <span class="text-6xl wiggle-animation">🌈</span>
-            <div>
-              <h1 class="text-4xl font-extrabold text-green-700">
-                Forest Adventure
-              </h1>
-              <p class="text-green-600 text-xl font-medium">
-                Practice Talking is Fun!
-              </p>
+<body class="min-h-screen p-4">
+    <div class="max-w-7xl mx-auto">
+        <!-- Header -->
+        <div class="glass-card rounded-3xl shadow-2xl p-6 mb-6">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-4">
+                    <div class="text-5xl">🦊</div>
+                    <div>
+                        <h1 class="text-3xl font-bold text-gray-800">Forest Friend</h1>
+                        <p class="text-gray-600">Let's do fun things together!</p>
+                    </div>
+                </div>
+                <div id="childNameDisplay" class="text-2xl font-bold text-purple-600 hidden">
+                    <!-- Child name will appear here -->
+                </div>
             </div>
-          </div>
-          <div class="flex items-center gap-3">
-            <div
-              class="bg-orange-100 rounded-full px-5 py-2 flex items-center gap-2 border-3 border-orange-400 shadow-md"
-            >
-              <span class="text-3xl">🔥</span>
-              <span class="font-extrabold text-orange-700 text-xl"
-                ><span id="streak">0</span> Days!</span
-              >
-            </div>
-            <button
-              onclick="toggleBadges()"
-              class="bg-yellow-100 rounded-full px-5 py-2 flex items-center gap-2 interactive-button border-3 border-yellow-400 shadow-md"
-            >
-              <span class="text-3xl">🏆</span>
-              <span class="font-extrabold text-yellow-700 text-xl"
-                ><span id="badgeCount">0</span> Badges</span
-              >
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <div class="flex gap-6 flex-wrap lg:flex-nowrap">
-        <div
-          class="w-full lg:w-96 forest-card rounded-[3rem] shadow-2xl p-8 border-6 border-green-500 card-3d-lift"
-        >
-          <h3
-            class="text-3xl font-bold text-green-700 mb-6 flex items-center gap-2"
-          >
-            <span class="text-4xl float-animation">🌲</span> Your Growth Path
-          </h3>
-
-          <div class="space-y-6" id="progressBars"></div>
-
-          <div class="mt-10 pt-6 border-t-4 border-green-300">
-            <h4
-              class="font-bold text-green-700 text-2xl mb-5 flex items-center gap-2"
-            >
-              <span class="text-3xl">🧩</span> Fun Activities
-            </h4>
-            <div class="space-y-4">
-              <button
-                onclick="startExercise('greetings')"
-                class="w-full bg-gradient-to-r from-blue-400 to-blue-500 hover:from-blue-500 hover:to-blue-600 text-white py-5 rounded-3xl font-extrabold text-xl shadow-lg border-4 border-blue-700 interactive-button"
-              >
-                <span class="text-3xl">🐻</span> Say Hello
-              </button>
-              <button
-                onclick="startExercise('emotions')"
-                class="w-full bg-gradient-to-r from-purple-400 to-purple-500 hover:from-purple-500 hover:to-purple-600 text-white py-5 rounded-3xl font-extrabold text-xl shadow-lg border-4 border-purple-700 interactive-button"
-              >
-                <span class="text-3xl">🦋</span> Talk About Feelings
-              </button>
-              <button
-                onclick="startExercise('questions')"
-                class="w-full bg-gradient-to-r from-teal-400 to-teal-500 hover:from-teal-500 hover:to-teal-600 text-white py-5 rounded-3xl font-extrabold text-xl shadow-lg border-4 border-teal-700 interactive-button"
-              >
-                <span class="text-3xl">🦉</span> Ask Questions
-              </button>
-              <button
-                onclick="startExercise('sharing')"
-                class="w-full bg-gradient-to-r from-pink-400 to-pink-500 hover:from-pink-500 hover:to-pink-600 text-white py-5 rounded-3xl font-extrabold text-xl shadow-lg border-4 border-pink-700 interactive-button"
-              >
-                <span class="text-3xl">🐰</span> Share Stories
-              </button>
-            </div>
-          </div>
         </div>
 
-        <div
-          class="flex-1 forest-card rounded-[3rem] shadow-2xl flex flex-col border-6 border-green-500 card-3d-lift"
-          style="height: calc(100vh - 120px)"
-        >
-          <div id="messages" class="flex-1 overflow-y-auto p-8 space-y-6"></div>
+        <div class="grid lg:grid-cols-3 gap-6">
+            <!-- Activities Sidebar -->
+            <div class="lg:col-span-1">
+                <div class="glass-card rounded-3xl shadow-2xl p-6">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2">
+                        <span>🎯</span> Choose an Activity
+                    </h2>
 
-          <div
-            class="border-t-4 border-green-300 p-6 bg-green-50 rounded-b-[3rem]"
-          >
-            <div class="flex gap-4">
-              <input
-                type="text"
-                id="messageInput"
-                placeholder="Type a friendly message here..."
-                class="flex-1 px-6 py-5 border-4 border-blue-400 rounded-full focus:border-blue-600 focus:outline-none text-xl bg-white shadow-inner font-medium"
-                onkeypress="handleKeyPress(event)"
-              />
-              <button
-                onclick="sendMessage()"
-                id="sendButton"
-                class="bg-gradient-to-r from-green-500 to-green-700 hover:from-green-600 hover:to-green-800 text-white px-8 py-5 rounded-full font-extrabold text-xl flex items-center gap-3 shadow-xl border-4 border-green-800 interactive-button"
-              >
-                <span class="text-3xl">💬</span>
-                <span>Talk!</span>
-              </button>
+                    <div class="space-y-4">
+                        <!-- Morning Routine -->
+                        <div onclick="startActivity('morning-routine')"
+                            class="activity-card bg-gradient-to-br from-yellow-100 to-orange-100 rounded-2xl p-4 shadow-lg border-2 border-yellow-300">
+                            <div class="flex items-center gap-3 mb-2">
+                                <span class="text-4xl">☀️</span>
+                                <div>
+                                    <h3 class="font-bold text-lg text-gray-800">Morning Routine</h3>
+                                    <p class="text-sm text-gray-600">Brush teeth, get dressed!</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Math Fun -->
+                        <div onclick="startActivity('math-fun')"
+                            class="activity-card bg-gradient-to-br from-blue-100 to-indigo-100 rounded-2xl p-4 shadow-lg border-2 border-blue-300">
+                            <div class="flex items-center gap-3 mb-2">
+                                <span class="text-4xl">🔢</span>
+                                <div>
+                                    <h3 class="font-bold text-lg text-gray-800">Math Time</h3>
+                                    <p class="text-sm text-gray-600">Fun with numbers!</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Praise Time -->
+                        <div onclick="startActivity('praise-time')"
+                            class="activity-card bg-gradient-to-br from-pink-100 to-rose-100 rounded-2xl p-4 shadow-lg border-2 border-pink-300">
+                            <div class="flex items-center gap-3 mb-2">
+                                <span class="text-4xl">⭐</span>
+                                <div>
+                                    <h3 class="font-bold text-lg text-gray-800">Praise Time</h3>
+                                    <p class="text-sm text-gray-600">Share what you did well!</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Feelings Check -->
+                        <div onclick="startActivity('feelings-check')"
+                            class="activity-card bg-gradient-to-br from-purple-100 to-violet-100 rounded-2xl p-4 shadow-lg border-2 border-purple-300">
+                            <div class="flex items-center gap-3 mb-2">
+                                <span class="text-4xl">💭</span>
+                                <div>
+                                    <h3 class="font-bold text-lg text-gray-800">How I Feel</h3>
+                                    <p class="text-sm text-gray-600">Talk about feelings</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Story Time -->
+                        <div onclick="startActivity('story-time')"
+                            class="activity-card bg-gradient-to-br from-green-100 to-emerald-100 rounded-2xl p-4 shadow-lg border-2 border-green-300">
+                            <div class="flex items-center gap-3 mb-2">
+                                <span class="text-4xl">📖</span>
+                                <div>
+                                    <h3 class="font-bold text-lg text-gray-800">Story Time</h3>
+                                    <p class="text-sm text-gray-600">Listen to forest stories!</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Activity Tracker -->
+                    <div class="mt-8 pt-6 border-t-2 border-gray-200">
+                        <h3 class="font-bold text-gray-800 mb-3 flex items-center gap-2">
+                            <span>✅</span> Completed Today
+                        </h3>
+                        <div id="completedList" class="text-sm text-gray-600">
+                            No activities yet - pick one above!
+                        </div>
+                    </div>
+                </div>
             </div>
-          </div>
-        </div>
-      </div>
-    </div>
 
-    <div
-      id="badgeModal"
-      class="hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50"
-    >
-      <div
-        class="forest-card rounded-[4rem] p-16 text-center max-w-lg border-10 border-yellow-500 shadow-2xl float-animation interactive-scene"
-      >
-        <div
-          class="text-9xl mb-6 wiggle-animation"
-          style="transform: translateZ(30px)"
-        >
-          🥳
+            <!-- Chat Area -->
+            <div class="lg:col-span-2">
+                <div class="glass-card rounded-3xl shadow-2xl overflow-hidden" style="height: calc(100vh - 200px);">
+                    <!-- Current Activity Header -->
+                    <div id="activityHeader"
+                        class="hidden bg-gradient-to-r from-purple-500 to-indigo-500 text-white p-4 text-center">
+                        <div class="flex items-center justify-center gap-2">
+                            <span id="activityEmoji" class="text-3xl"></span>
+                            <span id="activityName" class="text-xl font-bold"></span>
+                        </div>
+                    </div>
+
+                    <!-- Messages -->
+                    <div id="messages" class="chat-container flex-1 overflow-y-auto p-6 space-y-4"
+                        style="height: calc(100% - 140px);">
+                        <!-- Messages appear here -->
+                    </div>
+
+                    <!-- Input Area -->
+                    <div class="bg-white border-t-2 border-gray-200 p-4">
+                        <div class="flex gap-3">
+                            <input type="text" id="messageInput" placeholder="Type here..."
+                                class="flex-1 px-6 py-4 border-2 border-gray-300 rounded-full focus:border-purple-500 focus:outline-none text-lg"
+                                onkeypress="handleKeyPress(event)" />
+                            <button onclick="sendMessage()"
+                                class="bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600 text-white px-8 py-4 rounded-full font-bold text-lg shadow-lg">
+                                Send
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
-        <h2 class="text-5xl font-extrabold text-green-700 mb-4">
-          Amazing Job!
-        </h2>
-        <p class="text-2xl font-semibold text-gray-700 mb-2">
-          You earned a new badge:
-        </p>
-        <p
-          id="newBadgeText"
-          class="text-7xl font-black text-yellow-600 mb-10"
-          style="text-shadow: 4px 4px 0 #fcd34d"
-        ></p>
-        <button
-          onclick="closeBadgeModal()"
-          class="bg-gradient-to-r from-green-500 to-green-700 hover:from-green-600 hover:to-green-800 text-white px-12 py-5 rounded-full font-extrabold text-2xl shadow-xl interactive-button border-4 border-green-800"
-        >
-          Hooray! 🌟
-        </button>
-      </div>
     </div>
 
     <script>
-      // State
-      const sessionId = `session-${Date.now()}`;
-      let setupComplete = false;
-      let progress = { greetings: 5, emotions: 2, questions: 7, sharing: 0 }; // Example starting data
-      let badges = ["Hello Explorer 🐻"];
-      let streak = 3;
+        let sessionId = 'session-' + Date.now();
+        let setupComplete = false;
+        let currentActivity = null;
+        let completedActivities = [];
+        const API_BASE = window.location.origin;
 
-      // API base URL
-      const API_BASE = window.location.origin;
-
-      // Initialize
-      window.onload = () => {
-        addMessage(
-          "assistant",
-          "Hello there! I'm your playful friend 🦊. Let's start a fun talking adventure. What's your name?"
-        );
-        updateProgress();
-        updateBadges();
-        document.getElementById("streak").textContent = streak;
-      };
-
-      // ... (rest of the sendMessage, handleKeyPress, startExercise functions remain the same) ...
-
-      // --- Core Functions (Simplified/Adapted for new design) ---
-
-      async function sendMessage() {
-        const input = document.getElementById("messageInput");
-        const message = input.value.trim();
-        if (!message) return;
-
-        addMessage("user", message);
-        input.value = "";
-
-        const loadingId = addLoadingMessage();
-
-        // Simulate API call and state update
-        await new Promise((r) => setTimeout(r, 1500)); // Simulate network delay
-        removeLoadingMessage(loadingId);
-
-        // SIMULATED RESPONSE LOGIC
-        let responseText =
-          "That's a great thing to share! Tell me more about it.";
-        let newBadgesEarned = [];
-
-        // Simple simulated progress update
-        if (
-          message.toLowerCase().includes("hello") ||
-          message.toLowerCase().includes("hi")
-        ) {
-          progress.greetings = Math.min(10, progress.greetings + 1);
-          if (
-            progress.greetings === 10 &&
-            !badges.includes("Hello Master 🐻")
-          ) {
-            badges.push("Hello Master 🐻");
-            newBadgesEarned.push("Hello Master 🐻");
-          }
-        } else if (
-          message.toLowerCase().includes("happy") ||
-          message.toLowerCase().includes("sad")
-        ) {
-          progress.emotions = Math.min(10, progress.emotions + 1);
-        }
-
-        if (newBadgesEarned.length > 0) {
-          updateBadges();
-          updateProgress();
-          showBadgeModal(newBadgesEarned[0]);
-        } else {
-          updateProgress();
-        }
-
-        addMessage("assistant", responseText);
-      }
-
-      function addMessage(role, content) {
-        const messagesDiv = document.getElementById("messages");
-        const messageDiv = document.createElement("div");
-        messageDiv.className = `flex ${role === "user" ? "justify-end" : "justify-start"}`;
-
-        const emoji = role === "user" ? "😊" : "🦊";
-        const bgColor =
-          role === "user"
-            ? "message-user text-white"
-            : "message-assistant text-gray-800 border-4 border-yellow-700";
-
-        messageDiv.innerHTML = `
-                <div class="max-w-xl">
-                    <div class="flex items-start gap-3 ${role === "user" ? "flex-row-reverse" : ""}">
-                        <span class="text-4xl ${role === "assistant" ? "float-animation" : ""}">${emoji}</span>
-                        <div class="${bgColor} px-6 py-4 rounded-3xl shadow-xl font-medium border-2 ${role === "user" ? "border-blue-700" : ""}">
-                            <p class="text-xl leading-relaxed">${content}</p>
-                        </div>
-                    </div>
-                </div>
-            `;
-
-        messagesDiv.appendChild(messageDiv);
-        messagesDiv.scrollTop = messagesDiv.scrollHeight;
-      }
-
-      function addLoadingMessage() {
-        const messagesDiv = document.getElementById("messages");
-        const loadingDiv = document.createElement("div");
-        loadingDiv.id = `loading-${Date.now()}`;
-        loadingDiv.className = "flex justify-start";
-        loadingDiv.innerHTML = `
-                <div class="flex items-start gap-3">
-                    <span class="text-4xl float-animation">🦊</span>
-                    <div class="bg-gradient-to-r from-green-100 to-green-200 px-6 py-4 rounded-3xl shadow-lg border-4 border-green-300">
-                        <div class="flex gap-2">
-                            <div class="w-4 h-4 bg-green-500 rounded-full animate-bounce"></div>
-                            <div class="w-4 h-4 bg-green-500 rounded-full animate-bounce" style="animation-delay: 0.2s;"></div>
-                            <div class="w-4 h-4 bg-green-500 rounded-full animate-bounce" style="animation-delay: 0.4s;"></div>
-                        </div>
-                    </div>
-                </div>
-            `;
-        messagesDiv.appendChild(loadingDiv);
-        messagesDiv.scrollTop = messagesDiv.scrollHeight;
-        return loadingDiv.id;
-      }
-
-      function removeLoadingMessage(id) {
-        const loading = document.getElementById(id);
-        if (loading) loading.remove();
-      }
-
-      function updateProgress() {
-        const progressBars = document.getElementById("progressBars");
-        progressBars.innerHTML = `
-                ${createProgressBar("Hello Bear 🐻", progress.greetings, 10, "blue")}
-                ${createProgressBar("Feeling Butterfly 🦋", progress.emotions, 10, "purple")}
-                ${createProgressBar("Question Owl 🦉", progress.questions, 10, "teal")}
-                ${createProgressBar("Story Bunny 🐰", progress.sharing, 10, "pink")}
-            `;
-      }
-
-      function createProgressBar(label, value, max, color) {
-        const percentage = Math.min((value / max) * 100, 100);
-        const colors = {
-          blue: "from-blue-400 to-blue-600",
-          purple: "from-purple-400 to-purple-600",
-          teal: "from-teal-400 to-teal-600",
-          pink: "from-pink-400 to-pink-600"
+        const activityInfo = {
+            'morning-routine': { emoji: '☀️', name: 'Morning Routine' },
+            'math-fun': { emoji: '🔢', name: 'Math Time' },
+            'praise-time': { emoji: '⭐', name: 'Praise Time' },
+            'feelings-check': { emoji: '💭', name: 'How I Feel' },
+            'story-time': { emoji: '📖', name: 'Story Time' }
         };
 
-        return `
-                <div>
-                    <div class="flex justify-between mb-2">
-                        <span class="text-lg font-bold text-green-800">${label}</span>
-                        <span class="text-lg font-extrabold text-green-900">${value}/${max}</span>
-                    </div>
-                    <div class="w-full bg-green-200 rounded-full h-6 border-4 border-green-400 overflow-hidden shadow-inner">
-                        <div class="bg-gradient-to-r ${colors[color]} h-full rounded-full transition-all duration-500 shadow-xl" style="width: ${percentage}%"></div>
+        window.onload = function () {
+            addMessage('assistant', "Hi! What's your name?");
+        };
+
+        async function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const message = input.value.trim();
+            if (!message) return;
+
+            addMessage('user', message);
+            input.value = '';
+
+            const loadingId = addLoadingMessage();
+
+            try {
+                const response = await fetch(`${API_BASE}/api/chat`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        message,
+                        sessionId,
+                        parentMode: !setupComplete
+                    })
+                });
+
+                const data = await response.json();
+                removeLoadingMessage(loadingId);
+                addMessage('assistant', data.response);
+
+                if (data.setupComplete !== undefined) {
+                    setupComplete = data.setupComplete;
+                    if (data.childName) {
+                        document.getElementById('childNameDisplay').textContent = `Hi ${data.childName}! 👋`;
+                        document.getElementById('childNameDisplay').classList.remove('hidden');
+                    }
+                }
+
+                if (data.currentActivity) {
+                    currentActivity = data.currentActivity;
+                    showActivityHeader(currentActivity);
+                }
+
+                if (data.activitiesCompleted) {
+                    completedActivities = data.activitiesCompleted;
+                    updateCompletedList();
+                }
+
+            } catch (error) {
+                console.error('Error:', error);
+                removeLoadingMessage(loadingId);
+                addMessage('assistant', "Oops! Let me try again!");
+            }
+        }
+
+        function addMessage(role, content) {
+            const messagesDiv = document.getElementById('messages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message-bubble flex ${role === 'user' ? 'justify-end' : 'justify-start'}`;
+
+            const bgColor = role === 'user'
+                ? 'bg-gradient-to-r from-purple-500 to-indigo-500 text-white'
+                : 'bg-white text-gray-800 shadow-md border-2 border-gray-200';
+
+            messageDiv.innerHTML = `
+                <div class="max-w-md ${bgColor} px-6 py-4 rounded-3xl">
+                    <p class="text-lg leading-relaxed">${content}</p>
+                </div>
+            `;
+
+            messagesDiv.appendChild(messageDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        function addLoadingMessage() {
+            const messagesDiv = document.getElementById('messages');
+            const loadingDiv = document.createElement('div');
+            loadingDiv.id = 'loading-' + Date.now();
+            loadingDiv.className = 'flex justify-start message-bubble';
+            loadingDiv.innerHTML = `
+                <div class="bg-white px-6 py-4 rounded-3xl shadow-md border-2 border-gray-200">
+                    <div class="flex gap-2">
+                        <div class="w-3 h-3 bg-purple-500 rounded-full animate-bounce"></div>
+                        <div class="w-3 h-3 bg-purple-500 rounded-full animate-bounce" style="animation-delay: 0.2s;"></div>
+                        <div class="w-3 h-3 bg-purple-500 rounded-full animate-bounce" style="animation-delay: 0.4s;"></div>
                     </div>
                 </div>
             `;
-      }
-
-      function updateBadges() {
-        const badgesList = document.getElementById("badgesList");
-        const badgeCount = document.getElementById("badgeCount");
-
-        badgeCount.textContent = badges.length;
-
-        // Removed badgesList display from this area to simplify sidebar visually
-      }
-
-      function showBadgeModal(badge) {
-        document.getElementById("newBadgeText").textContent = badge;
-        document.getElementById("badgeModal").classList.remove("hidden");
-      }
-
-      function closeBadgeModal() {
-        document.getElementById("badgeModal").classList.add("hidden");
-      }
-
-      function toggleBadges() {
-        // Simplified badge view for a pop-up
-        alert(
-          `🏆 Your Adventure Badges:\n\n${badges.length ? badges.map((b) => `⭐ ${b}`).join("\n") : "Keep practicing to collect forest badges!"}`
-        );
-      }
-
-      async function startExercise(type) {
-        const exercises = {
-          greetings:
-            "Let's practice saying hello! 🐻 I'll start: Hello! How are you today? Remember to use a happy voice!",
-          emotions:
-            "Let's talk about feelings! 🦋 Can you tell me about a time you felt really happy? Use your words!",
-          questions:
-            "Let's practice asking questions! 🦉 I'll tell you about my forest, and you can ask me anything! Try asking 'Why' or 'What'!",
-          sharing:
-            "Let's practice sharing! 🐰 Tell me about something you really like, like your favorite toy or food!"
-        };
-
-        addMessage("assistant", exercises[type]);
-      }
-
-      function handleKeyPress(event) {
-        if (event.key === "Enter") {
-          sendMessage();
+            messagesDiv.appendChild(loadingDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+            return loadingDiv.id;
         }
-      }
+
+        function removeLoadingMessage(id) {
+            const loading = document.getElementById(id);
+            if (loading) loading.remove();
+        }
+
+        async function startActivity(type) {
+            try {
+                const response = await fetch(`${API_BASE}/api/exercise`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ exerciseType: type, sessionId })
+                });
+
+                const data = await response.json();
+                addMessage('assistant', data.response || data);
+
+                currentActivity = type;
+                showActivityHeader(type);
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+
+        function showActivityHeader(type) {
+            const header = document.getElementById('activityHeader');
+            const emoji = document.getElementById('activityEmoji');
+            const name = document.getElementById('activityName');
+
+            const info = activityInfo[type];
+            if (info) {
+                emoji.textContent = info.emoji;
+                name.textContent = info.name;
+                header.classList.remove('hidden');
+            }
+        }
+
+        function updateCompletedList() {
+            const list = document.getElementById('completedList');
+            if (completedActivities.length === 0) {
+                list.innerHTML = '<p class="text-gray-600">No activities yet - pick one above!</p>';
+            } else {
+                list.innerHTML = completedActivities.map(activity => {
+                    const info = activityInfo[activity];
+                    return `<div class="flex items-center gap-2 mb-2">
+                        <span>${info?.emoji || '✅'}</span>
+                        <span>${info?.name || activity}</span>
+                    </div>`;
+                }).join('');
+            }
+        }
+
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        }
     </script>
-  </body>
+</body>
+
 </html>
