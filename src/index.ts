@@ -1,3 +1,7 @@
+import type {
+  DurableObjectNamespace,
+  DurableObjectStub,
+} from "@cloudflare/workers-types";
 import { SocialSkillsAgent } from "./agent";
 
 interface ChatBody {
@@ -50,7 +54,7 @@ export default {
         const agent = env.SOCIAL_SKILLS_AGENT.get(agentId);
 
         // Call the agent's chat method via the Durable Object's fetch
-        const response = await agent.fetch(request);
+        const response = await agent.fetch(request as any);
         const result = await response.json();
 
         return new Response(JSON.stringify(result), {
@@ -82,7 +86,7 @@ export default {
         );
         const agent = env.SOCIAL_SKILLS_AGENT.get(agentId);
 
-        const response = await agent.fetch(request);
+        const response = await agent.fetch(request as any);
         const result = await response.json();
 
         return new Response(JSON.stringify(result), {
@@ -118,22 +122,28 @@ export default {
           startActivity?: (t: string) => Promise<unknown>;
         };
 
-        // If the Durable Object exposes a startActivity method, call it; otherwise
-        // fall back to proxying the request to the Durable Object's fetch handler.
-        let result: unknown;
-        if (typeof stub.startActivity === "function") {
-          result = await stub.startActivity(exerciseType || "");
-        } else {
-          const resp = await stub.fetch(request);
-          result = await resp.json();
+        if (stub.startActivity) {
+          const resp = await stub.fetch(request as any);
+          const result = await resp.json();
+          return new Response(JSON.stringify(result), {
+            headers: {
+              "Content-Type": "application/json",
+              ...corsHeaders
+            }
+          });
         }
 
-        return new Response(JSON.stringify(result), {
-          headers: {
-            "Content-Type": "application/json",
-            ...corsHeaders
+        // Fallback for exercise API
+        return new Response(
+          JSON.stringify({ error: "Failed to start activity" }),
+          {
+            status: 500,
+            headers: {
+              "Content-Type": "application/json",
+              ...corsHeaders
+            }
           }
-        });
+        );
       } catch (_error) {
         return new Response(
           JSON.stringify({ error: "Failed to start activity" }),
@@ -148,41 +158,20 @@ export default {
       }
     }
 
-    // Serve static frontend (if using Pages)
-    // If the request is not for our API, proxy it to the Pages-hosted static
-    // frontend. This works around client-side TLS issues some users experience
-    // when connecting directly to the Pages domain: the browser talks to the
-    // Worker (which has a valid TLS endpoint) and the Worker fetches the Pages
-    // content from Cloudflare and returns it.
-    if (request.method === "GET" && !url.pathname.startsWith("/api")) {
-      // Proxy to the currently published Pages site. Updated to the active
-      // deployment hostname so the Worker returns the same frontend.
-      const pagesOrigin = "https://9288a763.autism-social-coach.pages.dev";
-      const pagesUrl = pagesOrigin + url.pathname + url.search;
-      try {
-        const resp = await fetch(pagesUrl, {
-          headers: request.headers,
-          redirect: "manual"
-        });
-        // Return the fetched response directly (preserves content-type, etc.)
-        return resp;
-      } catch (_err) {
-        return new Response(
-          JSON.stringify({ error: "Failed to fetch frontend" }),
-          {
-            status: 502,
-            headers: { "Content-Type": "application/json" }
-          }
-        );
-      }
-    }
+    // Serve static assets from the 'src/frontend' directory
+    try {
+      // This requires a custom build step or a compatible bundler setup
+      // to make the assets available to the worker.
+      // For local dev with `wrangler dev`, you can configure `site` in `wrangler.jsonc`.
+      const assets = env.ASSETS as { fetch: (req: Request) => Promise<Response> };
+      const response = await assets.fetch(request);
+      return response;
 
-    // Default response
-    return new Response("AI Social Skills Coach API", {
-      headers: { "Content-Type": "text/plain", ...corsHeaders }
-    });
-  }
+    } catch (e) {
+      // If ASSETS binding is not configured or fails, return a simple message.
+      return new Response("Not found. Static asset serving is not configured.", { status: 404 });
+    }
+  },
 };
 
-// Export the Durable Object
 export { SocialSkillsAgent };

@@ -1,287 +1,178 @@
-import { Agent } from "agents";
+import type {
+  DurableObject,
+  DurableObjectState,
+  DurableObjectNamespace,
+  ExecutionContext,
+} from "@cloudflare/workers-types";
+import { Request, Response } from "@cloudflare/workers-types";
 
-interface ConversationState {
+export interface Env {
+  AI: any;
+  SOCIAL_SKILLS_AGENT: DurableObjectNamespace;
+  ASSETS: { fetch: (request: Request) => Promise<Response> };
+}
+
+// Simplified state for the agent
+interface AgentState {
   childName?: string;
   age?: number;
-  conversationHistory: Array<{
-    role: "user" | "assistant";
-    content: string;
-    timestamp: number;
-  }>;
-  currentActivity?: string;
-  activitiesCompleted: string[];
-  lastInteraction?: number;
   preferences: {
-    lovesMath: boolean;
-    favoriteColor?: string;
     interests: string[];
+  };
+  currentActivity?: string;
+  history: { role: "user" | "assistant"; content: string }[];
+}
+
+// The request structure from the frontend
+interface ChatRequest {
+  message: string;
+  sessionId: string;
+  state: {
+    childName?: string;
+    age?: number;
+    preferences: {
+      interests: string[];
+    };
+    currentActivity?: string;
   };
 }
 
-export class SocialSkillsAgent extends Agent {
-  // Use the ConversationState type for strong typing of agent state.
-  public get state(): ConversationState {
-    return (this as unknown as { _state?: ConversationState })
-      ._state as ConversationState;
+export class SocialSkillsAgent implements DurableObject {
+  durableState: DurableObjectState;
+  env: Env;
+
+  constructor(durableObjectState: DurableObjectState, env: Env) {
+    this.durableState = durableObjectState;
+    this.env = env;
   }
 
-  public set state(v: ConversationState) {
-    (this as unknown as { _state?: ConversationState })._state = v;
+  async fetch(request: Request): Promise<Response> {
+    const url = new URL(request.url);
+    if (url.pathname === "/api/chat") {
+      return this.handleChat(request);
+    }
+    return new Response("Not Found", { status: 404 });
   }
 
-  async onStart() {
-    const savedState = await this.loadState();
-    // initialize default shaped state if missing
-    if (!this.state) {
-      this.state = {
-        childName: undefined,
-        age: undefined,
-        conversationHistory: [],
-        currentActivity: undefined,
-        activitiesCompleted: [],
-        lastInteraction: undefined,
-        preferences: { lovesMath: false, interests: [] }
-      };
-    }
-
-    if (savedState) {
-      this.state = { ...this.state, ...savedState };
-    }
-  }
-
-  async chat(message: string, metadata?: { parentMode?: boolean }) {
-    const timestamp = Date.now();
-
-    this.state.conversationHistory.push({
-      role: "user",
-      content: message,
-      timestamp
-    });
-
-    // Setup mode
-    if (metadata?.parentMode || !this.state.childName) {
-      return await this.handleSetup(message);
-    }
-
-    const response = await this.generateResponse(message);
-
-    this.state.conversationHistory.push({
-      role: "assistant",
-      content: response,
-      timestamp: Date.now()
-    });
-
-    this.state.lastInteraction = Date.now();
-    await this.saveState();
-
-    return {
-      response,
-      currentActivity: this.state.currentActivity,
-      activitiesCompleted: this.state.activitiesCompleted
-    };
-  }
-
-  private async handleSetup(message: string) {
-    const lowerMsg = message.toLowerCase();
-
-    if (!this.state.childName) {
-      const nameMatch = message.match(
-        /(?:name is |called |i'm |im |my name is )([\w]+)/i
-      );
-      if (nameMatch) {
-        this.state.childName = nameMatch[1];
-      }
-    }
-
-    if (!this.state.age) {
-      const ageMatch = message.match(/(\d+)/);
-      if (ageMatch) {
-        this.state.age = parseInt(ageMatch[1], 10);
-      }
-    }
-
-    // Detect preferences
-    if (lowerMsg.includes("math") || lowerMsg.includes("numbers")) {
-      this.state.preferences.lovesMath = true;
-    }
-
-    if (lowerMsg.includes("green")) {
-      this.state.preferences.favoriteColor = "green";
-    }
-
-    await this.saveState();
-
-    if (this.state.childName && this.state.age) {
-      return {
-        response: `Hi ${this.state.childName}! I'm so happy to meet you! I'm your forest friend and I'm here to do fun things with you. Ready to start?`,
-        setupComplete: true,
-        childName: this.state.childName
-      };
-    }
-
-    return {
-      response: "Hi! What's your name?",
-      setupComplete: false
-    };
-  }
-
-  private async generateResponse(userMessage: string): Promise<string> {
-    const systemPrompt = this.buildSystemPrompt();
-    const conversationContext = this.getRecentContext();
-
-    // Add a small repetition-avoidance hint that includes the last few assistant
-    // replies so the model can avoid repeating itself verbatim.
-    const recentAssistant = this.state.conversationHistory
-      .slice(-4)
-      .filter((m) => m.role === "assistant")
-      .map((m) => m.content)
-      .filter(Boolean);
-
-    const repetitionHint = recentAssistant.length
-      ? `Avoid repeating these recent assistant replies verbatim: ${JSON.stringify(
-          recentAssistant
-        )}. If you need to repeat, paraphrase and add a new follow-up question.`
-      : "";
-
+  async handleChat(request: Request): Promise<Response> {
     try {
-      const response = await this.env.AI.run(
-        "@cf/meta/llama-3.3-70b-instruct-fp8-fast",
-        {
-          messages: [
-            { role: "system", content: `${systemPrompt}\n${repetitionHint}` },
-            ...conversationContext,
-            { role: "user", content: userMessage }
-          ],
-          // sampling params to make replies feel more 'chatty' and less repetitive
-          max_tokens: 280,
-          temperature: 0.9,
-          top_p: 0.95
-        }
-      );
+      const { message, sessionId, state: clientState } = await request.json<ChatRequest>();
 
-      // Normalize SDK response
-      if (typeof response === "string") return response;
-      if ((response as unknown as { response?: unknown })?.response)
-        return String((response as unknown as { response?: unknown }).response);
-      return String(response) || "That's great! What else?";
+      // Load or initialize state for the given session
+      let agentState = await this.durableState.storage.get<AgentState>(sessionId);
+
+      if (!agentState) {
+        agentState = {
+          childName: clientState.childName,
+          age: clientState.age,
+          preferences: { interests: clientState.preferences?.interests || [] },
+          currentActivity: clientState.currentActivity,
+          history: [],
+        };
+      } else {
+        // Update state with latest from client if needed
+        agentState.currentActivity = clientState.currentActivity;
+      }
+      
+      // Add user message to history
+      agentState.history.push({ role: "user", content: message });
+
+      const response = await this.generateResponse(agentState);
+      
+      // Add assistant response to history
+      agentState.history.push({ role: "assistant", content: response });
+
+      // Prune history to keep it from getting too long
+      if (agentState.history.length > 10) {
+        agentState.history = agentState.history.slice(-10);
+      }
+
+      // Save the updated state
+      await this.durableState.storage.put(sessionId, agentState);
+
+      return new Response(JSON.stringify({ response }), {
+        headers: { "Content-Type": "application/json" },
+      });
     } catch (error) {
-      console.error("AI Error:", error);
-      return "I'm listening! Keep going!";
+      console.error("Error in handleChat:", error);
+      return new Response("Internal Server Error", { status: 500 });
     }
   }
 
-  private buildSystemPrompt(): string {
-    const childName = this.state.childName || "friend";
-    const age = this.state.age || 8;
-    const lovesMath = this.state.preferences.lovesMath;
-    const activity = this.state.currentActivity;
-
-    let activityContext = "";
-
-    if (activity === "morning-routine") {
-      activityContext = `You are helping ${childName} with their morning routine. Guide them step by step through brushing teeth, getting dressed, eating breakfast. Use encouraging language like "Great job!" and "You're doing amazing!". Ask them to confirm when each step is done.`;
-    } else if (activity === "math-fun") {
-      activityContext = `You are doing math with ${childName}. Ask simple addition or subtraction problems appropriate for age ${age}. Celebrate correct answers enthusiastically. If wrong, gently guide them. Make it fun with forest animals (like "If you have 3 squirrels and 2 more come, how many squirrels?").`;
-    } else if (activity === "praise-time") {
-      activityContext = `This is praise time. Ask ${childName} what they did well today. Celebrate their achievements enthusiastically. Use specific praise like "You did such a good job brushing your teeth!" Ask follow up questions about what made them proud.`;
-    } else if (activity === "feelings-check") {
-      activityContext = `Help ${childName} identify and name their feelings. Ask "How are you feeling right now?" with specific emotion words as examples. If they're upset, acknowledge it and help them describe it. Be warm and validating.`;
-    } else if (activity === "story-time") {
-      activityContext = `Tell ${childName} a very short story about forest animals. Keep it to 3-4 sentences. Then ask them a simple question about it. Make it interactive and fun.`;
-    } else {
-      activityContext = `Have a friendly conversation with ${childName}. Ask specific questions about their day, their interests, or what they're doing. Be warm and engaging like a caring friend.`;
-    }
-
-    // Provide short examples and a persona to encourage dynamic responses and
-    // avoid the model falling into repeated patterns.
-    return `You are a patient, warm friend talking with ${childName}, who is ${age} years old and has autism.
-
-CRITICAL RULES:
-- Use simple, concrete words. No idioms or sarcasm.
-- Be encouraging and positive - celebrate everything!
-- Speak like you're talking to a young child: warm, gentle, excited for them.
-- Keep responses short (1-2 short sentences) and focused.
-- Ask ONE specific question at a time, never multiple.
-- ${lovesMath ? "This child loves math - include numbers when possible!" : ""}
-- Avoid vague prompts like "tell me more"; instead ask a specific follow-up question.
-- Use the child's name occasionally to stay personal.
-
-CURRENT ACTIVITY: ${activity || "general conversation"}
-${activityContext}
-
-BEHAVIOR EXAMPLES (do these):
-- Child: "I brushed my teeth." Assistant: "Awesome, Sam! Brushing is a great start — what next?"
-- Child: "5" (math answer). Assistant: "Yes! 5 is right — how many stars did you get?"
-
-IF YOU FEEL REPETITIVE: Paraphrase the previous message and add a new small question or a playful prompt (for example: instead of repeating "Good job!", say "You're doing great — want a sticker?" ).
-
-Tone: Like a kind teacher or loving parent - warm, clear, enthusiastic, patient.`;
-  }
-
-  private getRecentContext() {
-    return this.state.conversationHistory.slice(-8).map((msg) => ({
-      role: msg.role,
-      content: msg.content
-    }));
-  }
-
-  async startActivity(activityType: string) {
-    this.state.currentActivity = activityType;
-    await this.saveState();
-
-    const activities: Record<string, string> = {
-      "morning-routine": `Good morning ${this.state.childName}! Let's do your morning routine together. First, did you brush your teeth yet?`,
-      "math-fun": `Math time! 🌲 Here's a fun one: If you have 2 apples and I give you 3 more apples, how many apples do you have?`,
-      "praise-time": `You're doing so great! Tell me one thing you did really well today. I want to celebrate with you!`,
-      "feelings-check": `How are you feeling right now? Are you happy, excited, tired, or maybe something else?`,
-      "story-time": `Story time! 🦊 Once upon a time, a little fox got lost in the forest. He felt scared. Then a friendly owl helped him find his way home! How do you think the fox felt when he got home?`
+  private async generateResponse(agentState: AgentState): Promise<string> {
+    const systemPrompt = this.buildSystemPrompt(agentState);
+    
+    const aiRequest = {
+      messages: [
+        { role: "system", content: systemPrompt },
+        ...agentState.history,
+      ],
     };
 
-    return {
-      response:
-        activities[activityType] ||
-        `Let's do something fun together, ${this.state.childName}!`,
-      currentActivity: activityType
+    const aiResponse: { response: string } = await this.env.AI.run(
+      "@cf/meta/llama-3.1-8b-instruct",
+      aiRequest,
+    );
+
+    return aiResponse.response;
+  }
+
+  private buildSystemPrompt(agentState: AgentState): string {
+    const childProfile = {
+      name: agentState.childName || "my friend",
+      age: agentState.age || 7,
+      interests: agentState.preferences.interests,
+      currentActivity: agentState.currentActivity,
     };
-  }
 
-  async completeActivity() {
-    if (this.state.currentActivity) {
-      this.state.activitiesCompleted.push(this.state.currentActivity);
-      this.state.currentActivity = undefined;
-      await this.saveState();
+    return `You are speaking with ${childProfile.name}, age ${
+      childProfile.age
+    }, who may be on the autism spectrum.
 
-      return {
-        response: `Awesome job! You completed that activity! 🌟`,
-        activitiesCompleted: this.state.activitiesCompleted
-      };
-    }
-  }
+CRITICAL RULES (based on ASD communication research):
 
-  async getProgress() {
-    return {
-      childName: this.state.childName,
-      age: this.state.age,
-      totalConversations: this.state.conversationHistory.length,
-      activitiesCompleted: this.state.activitiesCompleted,
-      currentActivity: this.state.currentActivity,
-      preferences: this.state.preferences
-    };
-  }
+1.  **LITERAL LANGUAGE ONLY**: Absolutely no idioms, metaphors, or sarcasm. Say exactly what you mean.
+2.  **CONCRETE & SPECIFIC**: Use visual, descriptive words.
+3.  **ONE INSTRUCTION AT A TIME**: Give a single, clear direction.
+4.  **EXPLICIT TRANSITIONS**: Announce topic changes clearly.
+5.  **SPECIFIC PRAISE**: Name exactly what they did well. Praise effort.
+6.  **PREDICTABLE STRUCTURE**: Use consistent greetings and closings.
+7.  **INCORPORATE INTERESTS**: This child loves: ${
+      childProfile.interests.length > 0
+        ? childProfile.interests.join(", ")
+        : "trains, dinosaurs, and space"
+    }. Use these topics.
+8.  **TONE**: Your tone is warm, calm, and patient. Like a kind teacher.
+9.  **ASKING QUESTIONS**: Ask direct, closed questions. Avoid vague or rhetorical questions.
 
-  private async saveState() {
-    await this.setState(this.state);
-  }
+CURRENT ACTIVITY: ${childProfile.currentActivity || "general conversation"}
+- Stay focused on this one activity.
+- Ensure it has a clear beginning and a clear end.
 
-  private async loadState(): Promise<ConversationState | null> {
-    try {
-      return await this.getState();
-    } catch {
-      return null;
-    }
-  }
-
-  private async getState(): Promise<ConversationState> {
-    return this.state;
+Your responses must be short (1-2 simple sentences).`;
   }
 }
+
+export default {
+  async fetch(
+    request: Request,
+    env: Env,
+    ctx: ExecutionContext,
+  ): Promise<Response> {
+    try {
+      const url = new URL(request.url);
+      if (url.pathname.startsWith("/api/")) {
+        // We use a single, named durable object to handle all sessions.
+        const id = env.SOCIAL_SKILLS_AGENT.idFromName("agent-v2");
+        const agent = env.SOCIAL_SKILLS_AGENT.get(id);
+        return agent.fetch(request);
+      }
+      // Serve static assets from the `public` directory.
+      // This requires a change in wrangler.toml to configure the static asset directory.
+      // Assuming `public/index.html` is the entry point.
+      return env.ASSETS.fetch(request);
+    } catch (e: any) {
+      return new Response(e.message);
+    }
+  },
+};
