@@ -39,6 +39,23 @@ export class SocialSkillsAgent extends Agent {
     }
   }
 
+  // Ensure default state shape to avoid crashes when properties are missing
+  constructor(...args: any[]) {
+    // @ts-ignore - delegate to base class
+    super(...args);
+    if (!this.state) {
+      this.state = {
+        childName: undefined,
+        age: undefined,
+        conversationHistory: [],
+        currentActivity: undefined,
+        activitiesCompleted: [],
+        lastInteraction: undefined,
+        preferences: { lovesMath: false, interests: [] }
+      };
+    }
+  }
+
   async chat(message: string, metadata?: { parentMode?: boolean }) {
     const timestamp = Date.now();
 
@@ -119,22 +136,34 @@ export class SocialSkillsAgent extends Agent {
     const systemPrompt = this.buildSystemPrompt();
     const conversationContext = this.getRecentContext();
 
-    try {
-      const response = await this.env.AI.run(
-        "@cf/meta/llama-3.3-70b-instruct-fp8-fast",
-        {
-          messages: [
-            { role: "system", content: systemPrompt },
-            ...conversationContext,
-            { role: "user", content: userMessage }
-          ],
-          max_tokens: 150,
-          temperature: 0.8
-        }
-      );
+    // Add a small repetition-avoidance hint that includes the last few assistant
+    // replies so the model can avoid repeating itself verbatim.
+    const recentAssistant = this.state.conversationHistory
+      .slice(-4)
+      .filter((m: any) => m.role === "assistant")
+      .map((m: any) => m.content)
+      .filter(Boolean);
 
-      // Normalize the SDK response: it may return a plain string or an
-      // object with a `response` property depending on runtime. Handle both.
+    const repetitionHint = recentAssistant.length
+      ? `Avoid repeating these recent assistant replies verbatim: ${JSON.stringify(
+          recentAssistant
+        )}. If you need to repeat, paraphrase and add a new follow-up question.`
+      : "";
+
+    try {
+      const response = await this.env.AI.run("@cf/meta/llama-3.3-70b-instruct-fp8-fast", {
+        messages: [
+          { role: "system", content: systemPrompt + "\n" + repetitionHint },
+          ...conversationContext,
+          { role: "user", content: userMessage }
+        ],
+        // sampling params to make replies feel more 'chatty' and less repetitive
+        max_tokens: 280,
+        temperature: 0.9,
+        top_p: 0.95
+      });
+
+      // Normalize SDK response
       if (typeof response === "string") return response;
       if ((response as any)?.response) return (response as any).response;
       return String(response) || "That's great! What else?";
@@ -166,20 +195,28 @@ export class SocialSkillsAgent extends Agent {
       activityContext = `Have a friendly conversation with ${childName}. Ask specific questions about their day, their interests, or what they're doing. Be warm and engaging like a caring friend.`;
     }
 
-    return `You are a patient, warm friend talking with ${childName}, who is ${age} years old and has autism.
+  // Provide short examples and a persona to encourage dynamic responses and
+  // avoid the model falling into repeated patterns.
+  return `You are a patient, warm friend talking with ${childName}, who is ${age} years old and has autism.
 
 CRITICAL RULES:
 - Use simple, concrete words. No idioms or sarcasm.
 - Be encouraging and positive - celebrate everything!
-- Speak like you're talking to a young child: warm, gentle, excited for them
-- Keep responses to 1-2 short sentences
-- Ask ONE specific question at a time, never multiple
+- Speak like you're talking to a young child: warm, gentle, excited for them.
+- Keep responses short (1-2 short sentences) and focused.
+- Ask ONE specific question at a time, never multiple.
 - ${lovesMath ? "This child loves math - include numbers when possible!" : ""}
-- Never say "tell me more" - ask specific questions instead
-- Use their name sometimes to keep it personal
+- Avoid vague prompts like "tell me more"; instead ask a specific follow-up question.
+- Use the child's name occasionally to stay personal.
 
 CURRENT ACTIVITY: ${activity || "general conversation"}
 ${activityContext}
+
+BEHAVIOR EXAMPLES (do these):
+- Child: "I brushed my teeth." Assistant: "Awesome, Sam! Brushing is a great start — what next?"
+- Child: "5" (math answer). Assistant: "Yes! 5 is right — how many stars did you get?"
+
+IF YOU FEEL REPETITIVE: Paraphrase the previous message and add a new small question or a playful prompt (for example: instead of repeating "Good job!", say "You're doing great — want a sticker?" ).
 
 Tone: Like a kind teacher or loving parent - warm, clear, enthusiastic, patient.`;
   }

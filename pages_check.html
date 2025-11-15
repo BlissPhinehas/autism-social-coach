@@ -82,7 +82,7 @@
               id="startSessionBtn"
               onclick="startGuidedSession()"
               aria-pressed="false"
-              class="ml-3 bg-gradient-to-r from-green-400 to-green-600 text-white px-4 py-2 rounded-full font-bold shadow-sm"
+              class="ml-3 bg-linear-to-r from-green-400 to-green-600 text-white px-4 py-2 rounded-full font-bold shadow-sm"
             >
               🌟 Start Session
             </button>
@@ -104,7 +104,7 @@
               <!-- Morning Routine -->
               <div
                 onclick="startActivity('morning-routine')"
-                class="activity-card bg-gradient-to-br from-yellow-100 to-orange-100 rounded-2xl p-4 shadow-lg border-2 border-yellow-300"
+                class="activity-card bg-linear-to-br from-yellow-100 to-orange-100 rounded-2xl p-4 shadow-lg border-2 border-yellow-300"
               >
                 <div class="flex items-center gap-3 mb-2">
                   <span class="text-4xl">☀️</span>
@@ -122,7 +122,7 @@
               <!-- Math Fun -->
               <div
                 onclick="startActivity('math-fun')"
-                class="activity-card bg-gradient-to-br from-blue-100 to-indigo-100 rounded-2xl p-4 shadow-lg border-2 border-blue-300"
+                class="activity-card bg-linear-to-br from-blue-100 to-indigo-100 rounded-2xl p-4 shadow-lg border-2 border-blue-300"
               >
                 <div class="flex items-center gap-3 mb-2">
                   <span class="text-4xl">🔢</span>
@@ -136,7 +136,7 @@
               <!-- Praise Time -->
               <div
                 onclick="startActivity('praise-time')"
-                class="activity-card bg-gradient-to-br from-pink-100 to-rose-100 rounded-2xl p-4 shadow-lg border-2 border-pink-300"
+                class="activity-card bg-linear-to-br from-pink-100 to-rose-100 rounded-2xl p-4 shadow-lg border-2 border-pink-300"
               >
                 <div class="flex items-center gap-3 mb-2">
                   <span class="text-4xl">⭐</span>
@@ -152,7 +152,7 @@
               <!-- Feelings Check -->
               <div
                 onclick="startActivity('feelings-check')"
-                class="activity-card bg-gradient-to-br from-purple-100 to-violet-100 rounded-2xl p-4 shadow-lg border-2 border-purple-300"
+                class="activity-card bg-linear-to-br from-purple-100 to-violet-100 rounded-2xl p-4 shadow-lg border-2 border-purple-300"
               >
                 <div class="flex items-center gap-3 mb-2">
                   <span class="text-4xl">💭</span>
@@ -166,7 +166,7 @@
               <!-- Story Time -->
               <div
                 onclick="startActivity('story-time')"
-                class="activity-card bg-gradient-to-br from-green-100 to-emerald-100 rounded-2xl p-4 shadow-lg border-2 border-green-300"
+                class="activity-card bg-linear-to-br from-green-100 to-emerald-100 rounded-2xl p-4 shadow-lg border-2 border-green-300"
               >
                 <div class="flex items-center gap-3 mb-2">
                   <span class="text-4xl">📖</span>
@@ -201,7 +201,7 @@
             <!-- Current Activity Header -->
             <div
               id="activityHeader"
-              class="hidden bg-gradient-to-r from-purple-500 to-indigo-500 text-white p-4 text-center"
+              class="hidden bg-linear-to-r from-purple-500 to-indigo-500 text-white p-4 text-center"
             >
               <div class="flex items-center justify-center gap-2">
                 <span id="activityEmoji" class="text-3xl"></span>
@@ -232,7 +232,7 @@
                 />
                 <button
                   onclick="sendMessage()"
-                  class="bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600 text-white px-8 py-4 rounded-full font-bold text-lg shadow-lg"
+                  class="bg-linear-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600 text-white px-8 py-4 rounded-full font-bold text-lg shadow-lg"
                 >
                   Send
                 </button>
@@ -251,28 +251,41 @@
       const API_BASE = window.location.origin;
 
       const activityInfo = {
-        "morning-routine": { emoji: "☀️", name: "Morning Routine", category: "encouraging-habits" },
-        "math-fun": { emoji: "🔢", name: "Math Time", category: "numbers" },
-        "praise-time": { emoji: "⭐", name: "Praise Time", category: "social-skills" },
-        "feelings-check": { emoji: "💭", name: "How I Feel", category: "social-skills" },
-        "story-time": { emoji: "📖", name: "Story Time", category: "social-skills" }
+        "morning-routine": { emoji: "☀️", name: "Morning Routine" },
+        "math-fun": { emoji: "🔢", name: "Math Time" },
+        "praise-time": { emoji: "⭐", name: "Praise Time" },
+        "feelings-check": { emoji: "💭", name: "How I Feel" },
+        "story-time": { emoji: "📖", name: "Story Time" }
       };
 
       // Guided session configuration for a kid-friendly flow
       let sessionActive = false;
       let currentStep = -1;
-      // keep a small guided flow but map to the three main areas requested
       const sessionSteps = [
-        { id: "brush", prompt: "Please brush your teeth for two minutes. Say 'Done' when you're finished.", type: "action", category: "encouraging-habits" },
-        { id: "praise", prompt: "Tell me one thing you did well today. I'll cheer for you!", type: "action", category: "social-skills" },
-        { id: "math", prompt: "Math time! If you have 3 apples and I give you 2 more, how many apples do you have?", type: "choice", choices: ["4", "5"], category: "numbers" },
-        { id: "chat", prompt: "What's your favorite toy? Tell me its name.", type: "action", category: "social-skills" }
+        {
+          id: "brush",
+          prompt:
+            "Please brush your teeth for two minutes. Say 'Done' when you're finished.",
+          type: "action"
+        },
+        {
+          id: "praise",
+          prompt: "Tell me one thing you did well today. I'll cheer for you!",
+          type: "action"
+        },
+        {
+          id: "math",
+          prompt:
+            "Math time! If you have 3 apples and I give you 2 more, how many apples do you have?",
+          type: "choice",
+          choices: ["4", "5"]
+        },
+        {
+          id: "chat",
+          prompt: "What's your favorite toy? Tell me its name.",
+          type: "action"
+        }
       ];
-
-      // Track recent assistant replies to avoid repetition and escalate variety
-      const assistantHistory = [];
-      let assistantRepeatCount = 0;
-      const MAX_REPEAT = 2;
 
       window.onload = function () {
         addMessage("assistant", "Hi! What's your name?");
@@ -401,174 +414,23 @@
         if (loading) loading.remove();
       }
 
-      // startActivity will try the server first; if it fails or returns no content,
-      // fall back to a rich client-side activity so the sidebar buttons always work.
       async function startActivity(type) {
-        showActivityHeader(type);
-        currentActivity = type;
-
-        // Try server exercise endpoint, but don't block the UI if it fails
         try {
-          const resp = await fetch(`${API_BASE}/api/exercise`, {
+          const response = await fetch(`${API_BASE}/api/exercise`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ exerciseType: type, sessionId }),
-            cache: "no-store"
+            body: JSON.stringify({ exerciseType: type, sessionId })
           });
 
-          if (resp.ok) {
-            const data = await resp.json();
-            if (data && data.response) {
-              handleAssistantResponse(data.response);
-              return;
-            }
-          }
-        } catch (e) {
-          // server not available — fall through to client handler
-          console.warn("Exercise endpoint failed, using client fallback", e);
-        }
+          const data = await response.json();
+          addMessage("assistant", data.response || data);
 
-        // Client-side handlers for three core experiences
-        const handler = clientActivityHandlers[type] || clientActivityHandlers[activityInfo[type]?.category];
-        if (handler) handler(type);
-        else addMessage("assistant", "Let's try something fun! Choose an activity on the left.");
-      }
-
-      // lightweight helper that normalizes and displays assistant replies while
-      // preventing obvious repetition
-      function handleAssistantResponse(text) {
-        if (!text) return;
-        const last = assistantHistory[assistantHistory.length - 1] || null;
-        if (last === text) {
-          assistantRepeatCount++;
-        } else {
-          assistantRepeatCount = 0;
-        }
-
-        assistantHistory.push(text);
-        if (assistantHistory.length > 10) assistantHistory.shift();
-
-        if (assistantRepeatCount > MAX_REPEAT) {
-          // try to vary the reply
-          const alternatives = [
-            "I hear you — could you tell me one more thing about that?",
-            "Nice! Want to try a small game about that?",
-            "That's interesting — I have a fun question related to that!"
-          ];
-          const alt = alternatives[Math.floor(Math.random() * alternatives.length)];
-          addMessage("assistant", text + " — " + alt);
-        } else {
-          addMessage("assistant", text);
+          currentActivity = type;
+          showActivityHeader(type);
+        } catch (error) {
+          console.error("Error:", error);
         }
       }
-
-      // client-side activity implementations
-      const clientActivityHandlers = {
-        // morning routine: simple checklist + Done button that rewards the child
-        "morning-routine": (type) => {
-          addMessage("assistant", "Let's do the morning routine together! I'll cheer you on. 🌞");
-          const sc = document.getElementById("sessionControls");
-          sc.innerHTML = "";
-          const tasks = ["Brush teeth", "Get dressed", "Make bed"];
-          tasks.forEach((t) => {
-            const b = document.createElement("button");
-            b.className = "px-3 py-2 mr-2 rounded-md bg-yellow-200";
-            b.textContent = `I did: ${t}`;
-            b.onclick = () => {
-              addMessage("user", `I did: ${t}`);
-              addMessage("assistant", `Yay! ${t} done — great job! 🎉`);
-            };
-            sc.appendChild(b);
-          });
-          const finish = document.createElement("button");
-          finish.className = "px-4 py-2 ml-2 rounded-full bg-green-500 text-white font-bold";
-          finish.textContent = "All Done";
-          finish.onclick = () => {
-            addMessage("user", "All done");
-            addMessage("assistant", "Amazing job! You finished your morning routine — very proud of you! 🌟");
-            completedActivities.push(type);
-            updateCompletedList();
-            sc.innerHTML = "";
-          };
-          sc.appendChild(finish);
-        },
-
-        // social skills: roleplay scenarios with choices
-        "social-skills": (type) => {
-          addMessage("assistant", "Let's practice saying hello and asking questions. I'll be your friend. 🤝");
-          const sc = document.getElementById("sessionControls");
-          sc.innerHTML = "";
-          const scenarios = [
-            { q: "Someone says hi to you. What do you say?", choices: ["Hi!", "..." ] },
-            { q: "Your friend looks sad. What can you ask?", choices: ["Are you okay?", "Want to play?"] }
-          ];
-          let idx = 0;
-          function renderScenario() {
-            sc.innerHTML = "";
-            const s = scenarios[idx];
-            addMessage("assistant", s.q);
-            s.choices.forEach((c) => {
-              const b = document.createElement("button");
-              b.className = "px-4 py-2 rounded-full bg-indigo-500 text-white font-bold mr-2";
-              b.textContent = c;
-              b.onclick = () => {
-                addMessage("user", c);
-                addMessage("assistant", `Nice choice! Saying '${c}' helps your friend feel better.`);
-                idx++;
-                if (idx < scenarios.length) setTimeout(renderScenario, 700);
-                else {
-                  addMessage("assistant", "You practiced so well — that was great! 💖");
-                  sc.innerHTML = "";
-                  completedActivities.push(type);
-                  updateCompletedList();
-                }
-              };
-              sc.appendChild(b);
-            });
-          }
-          renderScenario();
-        },
-
-        // numbers: small arithmetic games with adaptive praise
-        "numbers": (type) => {
-          addMessage("assistant", "Numbers time! I'll ask small questions and give you stickers for correct answers. 🔢");
-          const sc = document.getElementById("sessionControls");
-          sc.innerHTML = "";
-          let score = 0;
-          function nextQuestion() {
-            const a = Math.floor(Math.random() * 5) + 1;
-            const b = Math.floor(Math.random() * 5) + 1;
-            const correct = a + b;
-            addMessage("assistant", `What is ${a} + ${b}?`);
-            sc.innerHTML = "";
-            for (let i = 0; i < 3; i++) {
-              const choice = correct + (i - 1);
-              const btt = document.createElement("button");
-              btt.className = "px-4 py-2 rounded-full bg-blue-500 text-white font-bold mr-2";
-              btt.textContent = String(choice);
-              btt.onclick = () => {
-                addMessage("user", String(choice));
-                if (choice === correct) {
-                  score++;
-                  addMessage("assistant", `Correct! You earned a sticker! 🎟️ (Score: ${score})`);
-                } else {
-                  addMessage("assistant", `Nice try — the answer was ${correct}.`);
-                }
-                if (score >= 3) {
-                  addMessage("assistant", `Awesome! You got ${score} stickers — great number play! 🎉`);
-                  sc.innerHTML = "";
-                  completedActivities.push(type);
-                  updateCompletedList();
-                } else {
-                  setTimeout(nextQuestion, 800);
-                }
-              };
-              sc.appendChild(btt);
-            }
-          }
-          nextQuestion();
-        }
-      };
 
       function showActivityHeader(type) {
         const header = document.getElementById("activityHeader");
