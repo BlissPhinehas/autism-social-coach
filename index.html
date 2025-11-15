@@ -1,0 +1,897 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Forest Friend</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+
+  <body class="min-h-screen p-4 starry-sky">
+    <div class="stars" aria-hidden="true"></div>
+    <div class="moon" aria-hidden="true"></div>
+    <div class="constellation" aria-hidden="true">
+      <svg
+        viewBox="0 0 280 160"
+        xmlns="http://www.w3.org/2000/svg"
+        width="280"
+        height="160"
+      >
+        <g stroke="rgba(255,255,255,0.65)" stroke-width="1" fill="none">
+          <line x1="20" y1="120" x2="60" y2="40" />
+          <line x1="60" y1="40" x2="120" y2="70" />
+          <line x1="120" y1="70" x2="180" y2="30" />
+        </g>
+        <g fill="white" opacity="0.9">
+          <circle cx="20" cy="120" r="2.2" />
+          <circle cx="60" cy="40" r="2.6" />
+          <circle cx="120" cy="70" r="2.2" />
+          <circle cx="180" cy="30" r="2.6" />
+        </g>
+      </svg>
+    </div>
+    <div class="streetwalk" aria-hidden="true">
+      <!-- Inline SVG for street silhouette, bench and lamp. Keeps class names for CSS hooks -->
+      <svg
+        class="street-svg"
+        viewBox="0 0 1200 320"
+        xmlns="http://www.w3.org/2000/svg"
+        role="img"
+        aria-hidden="true"
+      >
+        <defs>
+          <linearGradient id="gSilhouette" x1="0" x2="0" y1="0" y2="1">
+            <stop offset="0%" stop-color="#0a0a0a" />
+            <stop offset="100%" stop-color="#050505" />
+          </linearGradient>
+          <radialGradient id="lampGlow" cx="30%" cy="20%" r="50%">
+            <stop offset="0%" stop-color="rgba(255,230,160,0.9)" />
+            <stop offset="45%" stop-color="rgba(255,200,100,0.18)" />
+            <stop offset="100%" stop-color="rgba(255,200,100,0)" />
+          </radialGradient>
+        </defs>
+
+        <!-- ground / silhouette -->
+        <path
+          class="street-silhouette"
+          d="M0 200 C150 150 300 220 480 200 C600 185 760 210 920 190 C980 182 1100 200 1200 200 L1200 320 L0 320 Z"
+          fill="url(#gSilhouette)"
+        />
+
+        <!-- bench group (kept class for compatibility) - more detailed with slats and legs -->
+        <g class="bench" transform="translate(180,170) scale(1)">
+          <!-- seat top -->
+          <rect x="0" y="0" width="160" height="18" rx="3" fill="#0b0b0b" />
+          <!-- slats -->
+          <g fill="#141414" opacity="0.95">
+            <rect x="6" y="2" width="148" height="3" rx="1" />
+            <rect x="6" y="7" width="148" height="3" rx="1" />
+            <rect x="6" y="12" width="148" height="3" rx="1" />
+          </g>
+          <!-- legs -->
+          <rect x="10" y="18" width="10" height="36" fill="#0b0b0b" />
+          <rect x="140" y="18" width="10" height="36" fill="#0b0b0b" />
+          <!-- back support -->
+          <rect x="6" y="-10" width="148" height="8" rx="2" fill="#111111" />
+        </g>
+
+        <!-- lamp group (kept class for compatibility). improved lamp head and glow -->
+        <g class="lamp" transform="translate(820,32)">
+          <!-- pole -->
+          <rect x="22" y="28" width="6" height="200" fill="#0b0b0b" rx="2" />
+          <!-- cross arm and housing -->
+          <g transform="translate(0,6)">
+            <rect x="12" y="0" width="44" height="10" rx="4" fill="#151515" />
+            <rect x="18" y="-12" width="28" height="18" rx="6" fill="#121212" />
+            <!-- lamp glass -->
+            <ellipse
+              cx="32"
+              cy="-6"
+              rx="10"
+              ry="6"
+              fill="#ffdca8"
+              opacity="0.95"
+            />
+            <!-- glow circle uses gradient defined above -->
+            <circle class="glow" cx="16" cy="-6" r="40" fill="url(#lampGlow)" />
+            <!-- small detail highlight -->
+            <ellipse
+              cx="36"
+              cy="-8"
+              rx="3"
+              ry="1.6"
+              fill="rgba(255,255,255,0.12)"
+            />
+          </g>
+        </g>
+      </svg>
+    </div>
+    <div class="max-w-7xl mx-auto star-content">
+      <!-- Header -->
+      <div class="glass-card rounded-3xl shadow-2xl p-6 mb-6">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-4">
+            <div class="text-5xl">🦊</div>
+            <div>
+              <h1 class="text-3xl font-bold text-gray-800">Forest Friend</h1>
+              <p class="text-gray-600">Let's do fun things together!</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-3">
+            <div
+              id="childNameDisplay"
+              class="text-2xl font-bold text-purple-600 hidden"
+            >
+              <!-- Child name will appear here -->
+            </div>
+            <button
+              id="startSessionBtn"
+              onclick="startGuidedSession()"
+              aria-pressed="false"
+              class="ml-3 bg-gradient-to-r from-green-400 to-green-600 text-white px-4 py-2 rounded-full font-bold shadow-sm"
+            >
+              🌟 Start Session
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid lg:grid-cols-3 gap-6">
+        <!-- Activities Sidebar -->
+        <div class="lg:col-span-1">
+          <div class="glass-card rounded-3xl shadow-2xl p-6">
+            <h2
+              class="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2"
+            >
+              <span>🎯</span> Choose an Activity
+            </h2>
+
+            <div class="space-y-4">
+              <!-- Morning Routine -->
+              <div
+                onclick="startActivity('morning-routine')"
+                class="activity-card bg-gradient-to-br from-yellow-100 to-orange-100 rounded-2xl p-4 shadow-lg border-2 border-yellow-300"
+              >
+                <div class="flex items-center gap-3 mb-2">
+                  <span class="text-4xl">☀️</span>
+                  <div>
+                    <h3 class="font-bold text-lg text-gray-800">
+                      Morning Routine
+                    </h3>
+                    <p class="text-sm text-gray-600">
+                      Brush teeth, get dressed!
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Math Fun -->
+              <div
+                onclick="startActivity('math-fun')"
+                class="activity-card bg-gradient-to-br from-blue-100 to-indigo-100 rounded-2xl p-4 shadow-lg border-2 border-blue-300"
+              >
+                <div class="flex items-center gap-3 mb-2">
+                  <span class="text-4xl">🔢</span>
+                  <div>
+                    <h3 class="font-bold text-lg text-gray-800">Math Time</h3>
+                    <p class="text-sm text-gray-600">Fun with numbers!</p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Praise Time -->
+              <div
+                onclick="startActivity('praise-time')"
+                class="activity-card bg-gradient-to-br from-pink-100 to-rose-100 rounded-2xl p-4 shadow-lg border-2 border-pink-300"
+              >
+                <div class="flex items-center gap-3 mb-2">
+                  <span class="text-4xl">⭐</span>
+                  <div>
+                    <h3 class="font-bold text-lg text-gray-800">Praise Time</h3>
+                    <p class="text-sm text-gray-600">
+                      Share what you did well!
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Feelings Check -->
+              <div
+                onclick="startActivity('feelings-check')"
+                class="activity-card bg-gradient-to-br from-purple-100 to-violet-100 rounded-2xl p-4 shadow-lg border-2 border-purple-300"
+              >
+                <div class="flex items-center gap-3 mb-2">
+                  <span class="text-4xl">💭</span>
+                  <div>
+                    <h3 class="font-bold text-lg text-gray-800">How I Feel</h3>
+                    <p class="text-sm text-gray-600">Talk about feelings</p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Story Time -->
+              <div
+                onclick="startActivity('story-time')"
+                class="activity-card bg-gradient-to-br from-green-100 to-emerald-100 rounded-2xl p-4 shadow-lg border-2 border-green-300"
+              >
+                <div class="flex items-center gap-3 mb-2">
+                  <span class="text-4xl">📖</span>
+                  <div>
+                    <h3 class="font-bold text-lg text-gray-800">Story Time</h3>
+                    <p class="text-sm text-gray-600">
+                      Listen to forest stories!
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Activity Tracker -->
+            <div class="mt-8 pt-6 border-t-2 border-gray-200">
+              <h3 class="font-bold text-gray-800 mb-3 flex items-center gap-2">
+                <span>✅</span> Completed Today
+              </h3>
+              <div id="completedList" class="text-sm text-gray-600">
+                No activities yet - pick one above!
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Chat Area -->
+        <div class="lg:col-span-2">
+          <div
+            class="glass-card rounded-3xl shadow-2xl overflow-hidden"
+            style="height: calc(100vh - 200px)"
+          >
+            <!-- Current Activity Header -->
+            <div
+              id="activityHeader"
+              class="hidden bg-gradient-to-r from-purple-500 to-indigo-500 text-white p-4 text-center"
+            >
+              <div class="flex items-center justify-center gap-2">
+                <span id="activityEmoji" class="text-3xl"></span>
+                <span id="activityName" class="text-xl font-bold"></span>
+              </div>
+            </div>
+
+            <!-- Messages -->
+            <div
+              id="messages"
+              class="chat-container flex-1 overflow-y-auto p-6 space-y-4"
+              style="height: calc(100% - 140px)"
+            >
+              <!-- Messages appear here -->
+            </div>
+
+            <!-- Input Area -->
+            <div class="bg-white border-t-2 border-gray-200 p-4">
+              <!-- Session-specific quick controls will appear here for guided activities -->
+              <div id="sessionControls" class="mb-3" aria-live="polite"></div>
+              <div class="flex gap-3">
+                <input
+                  type="text"
+                  id="messageInput"
+                  placeholder="Type here..."
+                  class="flex-1 px-6 py-4 border-2 border-gray-300 rounded-full focus:border-purple-500 focus:outline-none text-lg"
+                  onkeypress="handleKeyPress(event)"
+                />
+                <button
+                  onclick="sendMessage()"
+                  class="bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600 text-white px-8 py-4 rounded-full font-bold text-lg shadow-lg"
+                >
+                  Send
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const sessionId = `session-${Date.now()}`;
+      let setupComplete = false;
+      let currentActivity = null;
+      let completedActivities = [];
+      const API_BASE = window.location.origin;
+
+      const activityInfo = {
+        "morning-routine": {
+          emoji: "☀️",
+          name: "Morning Routine",
+          category: "encouraging-habits"
+        },
+        "math-fun": { emoji: "🔢", name: "Math Time", category: "numbers" },
+        "praise-time": {
+          emoji: "⭐",
+          name: "Praise Time",
+          category: "social-skills"
+        },
+        "feelings-check": {
+          emoji: "💭",
+          name: "How I Feel",
+          category: "social-skills"
+        },
+        "story-time": {
+          emoji: "📖",
+          name: "Story Time",
+          category: "social-skills"
+        }
+      };
+
+      // Guided session configuration for a kid-friendly flow
+      let sessionActive = false;
+      let currentStep = -1;
+      // keep a small guided flow but map to the three main areas requested
+      const sessionSteps = [
+        {
+          id: "brush",
+          prompt:
+            "Please brush your teeth for two minutes. Say 'Done' when you're finished.",
+          type: "action",
+          category: "encouraging-habits"
+        },
+        {
+          id: "praise",
+          prompt: "Tell me one thing you did well today. I'll cheer for you!",
+          type: "action",
+          category: "social-skills"
+        },
+        {
+          id: "math",
+          prompt:
+            "Math time! If you have 3 apples and I give you 2 more, how many apples do you have?",
+          type: "choice",
+          choices: ["4", "5"],
+          category: "numbers"
+        },
+        {
+          id: "chat",
+          prompt: "What's your favorite toy? Tell me its name.",
+          type: "action",
+          category: "social-skills"
+        }
+      ];
+
+      // Track recent assistant replies to avoid repetition and escalate variety
+      const assistantHistory = [];
+      let assistantRepeatCount = 0;
+      const MAX_REPEAT = 2;
+
+      window.onload = () => {
+        addMessage("assistant", "Hi! What's your name?");
+      };
+
+      async function sendMessage() {
+        const input = document.getElementById("messageInput");
+        const message = input.value.trim();
+        if (!message) return;
+
+        addMessage("user", message);
+        input.value = "";
+
+        const loadingId = addLoadingMessage();
+
+        try {
+          const response = await fetch(`${API_BASE}/api/chat`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              message,
+              sessionId,
+              parentMode: !setupComplete
+            })
+          });
+
+          const data = await response.json();
+          removeLoadingMessage(loadingId);
+          addMessage("assistant", data.response);
+
+          if (data.setupComplete !== undefined) {
+            setupComplete = data.setupComplete;
+            if (data.childName) {
+              document.getElementById("childNameDisplay").textContent =
+                `Hi ${data.childName}! 👋`;
+              document
+                .getElementById("childNameDisplay")
+                .classList.remove("hidden");
+            }
+          }
+
+          if (data.currentActivity) {
+            currentActivity = data.currentActivity;
+            showActivityHeader(currentActivity);
+          }
+
+          if (data.activitiesCompleted) {
+            completedActivities = data.activitiesCompleted;
+            updateCompletedList();
+          }
+        } catch (error) {
+          console.error("Error:", error);
+          removeLoadingMessage(loadingId);
+          addMessage("assistant", "Oops! Let me try again!");
+        }
+      }
+
+      function addMessage(role, content) {
+        const messagesDiv = document.getElementById("messages");
+        const messageDiv = document.createElement("div");
+        messageDiv.className = `message-bubble flex ${role === "user" ? "justify-end" : "justify-start"}`;
+
+        // Prevent obvious repetition for assistant replies by detecting an
+        // identical previous assistant message and nudging the reply to feel
+        // more interactive (append a friendly suffix or alternate phrasing).
+        if (role === "assistant") {
+          // find the last assistant bubble (justify-start)
+          const bubbles = Array.from(
+            messagesDiv.querySelectorAll(".message-bubble")
+          );
+          let lastAssistantText = null;
+          for (let i = bubbles.length - 1; i >= 0; i--) {
+            const el = bubbles[i];
+            if (el.className.includes("justify-start")) {
+              lastAssistantText = el.textContent?.trim();
+              break;
+            }
+          }
+
+          if (lastAssistantText && lastAssistantText === content) {
+            const variants = [
+              " Great job! 🌟",
+              " Can you tell me more about that?",
+              " That was lovely — what happened next?",
+              " You're doing amazing!"
+            ];
+            const suffix =
+              variants[Math.floor(Math.random() * variants.length)];
+            content = `${content}${suffix}`;
+          }
+        }
+
+        const bgColor =
+          role === "user"
+            ? "bg-gradient-to-r from-purple-500 to-indigo-500 text-white"
+            : "bg-white text-gray-800 shadow-md border-2 border-gray-200";
+
+        messageDiv.innerHTML = `
+                <div class="max-w-md ${bgColor} px-6 py-4 rounded-3xl">
+                    <p class="text-lg leading-relaxed">${content}</p>
+                </div>
+            `;
+
+        messagesDiv.appendChild(messageDiv);
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+      }
+
+      function addLoadingMessage() {
+        const messagesDiv = document.getElementById("messages");
+        const loadingDiv = document.createElement("div");
+        loadingDiv.id = `loading-${Date.now()}`;
+        loadingDiv.className = "flex justify-start message-bubble";
+        loadingDiv.innerHTML = `
+                <div class="bg-white px-6 py-4 rounded-3xl shadow-md border-2 border-gray-200">
+                    <div class="flex gap-2">
+                        <div class="w-3 h-3 bg-purple-500 rounded-full animate-bounce"></div>
+                        <div class="w-3 h-3 bg-purple-500 rounded-full animate-bounce" style="animation-delay: 0.2s;"></div>
+                        <div class="w-3 h-3 bg-purple-500 rounded-full animate-bounce" style="animation-delay: 0.4s;"></div>
+                    </div>
+                </div>
+            `;
+        messagesDiv.appendChild(loadingDiv);
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        return loadingDiv.id;
+      }
+
+      function removeLoadingMessage(id) {
+        const loading = document.getElementById(id);
+        if (loading) loading.remove();
+      }
+
+      // startActivity will try the server first; if it fails or returns no content,
+      // fall back to a rich client-side activity so the sidebar buttons always work.
+      async function startActivity(type) {
+        showActivityHeader(type);
+        currentActivity = type;
+
+        // Try server exercise endpoint, but don't block the UI if it fails
+        try {
+          const resp = await fetch(`${API_BASE}/api/exercise`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ exerciseType: type, sessionId }),
+            cache: "no-store"
+          });
+
+          if (resp.ok) {
+            const data = await resp.json();
+            if (data?.response) {
+              handleAssistantResponse(data.response);
+              return;
+            }
+          }
+        } catch (e) {
+          // server not available — fall through to client handler
+          console.warn("Exercise endpoint failed, using client fallback", e);
+        }
+
+        // Client-side handlers for three core experiences
+        const handler =
+          clientActivityHandlers[type] ||
+          clientActivityHandlers[activityInfo[type]?.category];
+        if (handler) handler(type);
+        else
+          addMessage(
+            "assistant",
+            "Let's try something fun! Choose an activity on the left."
+          );
+      }
+
+      // lightweight helper that normalizes and displays assistant replies while
+      // preventing obvious repetition
+      function handleAssistantResponse(text) {
+        if (!text) return;
+        const last = assistantHistory[assistantHistory.length - 1] || null;
+        if (last === text) {
+          assistantRepeatCount++;
+        } else {
+          assistantRepeatCount = 0;
+        }
+
+        assistantHistory.push(text);
+        if (assistantHistory.length > 10) assistantHistory.shift();
+
+        if (assistantRepeatCount > MAX_REPEAT) {
+          // try to vary the reply
+          const alternatives = [
+            "I hear you — could you tell me one more thing about that?",
+            "Nice! Want to try a small game about that?",
+            "That's interesting — I have a fun question related to that!"
+          ];
+          const alt =
+            alternatives[Math.floor(Math.random() * alternatives.length)];
+          addMessage("assistant", `${text} — ${alt}`);
+        } else {
+          addMessage("assistant", text);
+        }
+      }
+
+      // client-side activity implementations
+      const clientActivityHandlers = {
+        // morning routine: simple checklist + Done button that rewards the child
+        "morning-routine": (type) => {
+          addMessage(
+            "assistant",
+            "Let's do the morning routine together! I'll cheer you on. 🌞"
+          );
+          const sc = document.getElementById("sessionControls");
+          sc.innerHTML = "";
+          const tasks = ["Brush teeth", "Get dressed", "Make bed"];
+          tasks.forEach((t) => {
+            const b = document.createElement("button");
+            b.className = "px-3 py-2 mr-2 rounded-md bg-yellow-200";
+            b.textContent = `I did: ${t}`;
+            b.onclick = () => {
+              addMessage("user", `I did: ${t}`);
+              addMessage("assistant", `Yay! ${t} done — great job! 🎉`);
+            };
+            sc.appendChild(b);
+          });
+          const finish = document.createElement("button");
+          finish.className =
+            "px-4 py-2 ml-2 rounded-full bg-green-500 text-white font-bold";
+          finish.textContent = "All Done";
+          finish.onclick = () => {
+            addMessage("user", "All done");
+            addMessage(
+              "assistant",
+              "Amazing job! You finished your morning routine — very proud of you! 🌟"
+            );
+            completedActivities.push(type);
+            updateCompletedList();
+            sc.innerHTML = "";
+          };
+          sc.appendChild(finish);
+        },
+
+        // social skills: roleplay scenarios with choices
+        "social-skills": (type) => {
+          addMessage(
+            "assistant",
+            "Let's practice saying hello and asking questions. I'll be your friend. 🤝"
+          );
+          const sc = document.getElementById("sessionControls");
+          sc.innerHTML = "";
+          const scenarios = [
+            {
+              q: "Someone says hi to you. What do you say?",
+              choices: ["Hi!", "..."]
+            },
+            {
+              q: "Your friend looks sad. What can you ask?",
+              choices: ["Are you okay?", "Want to play?"]
+            }
+          ];
+          let idx = 0;
+          function renderScenario() {
+            sc.innerHTML = "";
+            const s = scenarios[idx];
+            addMessage("assistant", s.q);
+            s.choices.forEach((c) => {
+              const b = document.createElement("button");
+              b.className =
+                "px-4 py-2 rounded-full bg-indigo-500 text-white font-bold mr-2";
+              b.textContent = c;
+              b.onclick = () => {
+                addMessage("user", c);
+                addMessage(
+                  "assistant",
+                  `Nice choice! Saying '${c}' helps your friend feel better.`
+                );
+                idx++;
+                if (idx < scenarios.length) setTimeout(renderScenario, 700);
+                else {
+                  addMessage(
+                    "assistant",
+                    "You practiced so well — that was great! 💖"
+                  );
+                  sc.innerHTML = "";
+                  completedActivities.push(type);
+                  updateCompletedList();
+                }
+              };
+              sc.appendChild(b);
+            });
+          }
+          renderScenario();
+        },
+
+        // numbers: small arithmetic games with adaptive praise
+        numbers: (type) => {
+          addMessage(
+            "assistant",
+            "Numbers time! I'll ask small questions and give you stickers for correct answers. 🔢"
+          );
+          const sc = document.getElementById("sessionControls");
+          sc.innerHTML = "";
+          let score = 0;
+          function nextQuestion() {
+            const a = Math.floor(Math.random() * 5) + 1;
+            const b = Math.floor(Math.random() * 5) + 1;
+            const correct = a + b;
+            addMessage("assistant", `What is ${a} + ${b}?`);
+            sc.innerHTML = "";
+            for (let i = 0; i < 3; i++) {
+              const choice = correct + (i - 1);
+              const btt = document.createElement("button");
+              btt.className =
+                "px-4 py-2 rounded-full bg-blue-500 text-white font-bold mr-2";
+              btt.textContent = String(choice);
+              btt.onclick = () => {
+                addMessage("user", String(choice));
+                if (choice === correct) {
+                  score++;
+                  addMessage(
+                    "assistant",
+                    `Correct! You earned a sticker! 🎟️ (Score: ${score})`
+                  );
+                } else {
+                  addMessage(
+                    "assistant",
+                    `Nice try — the answer was ${correct}.`
+                  );
+                }
+                if (score >= 3) {
+                  addMessage(
+                    "assistant",
+                    `Awesome! You got ${score} stickers — great number play! 🎉`
+                  );
+                  sc.innerHTML = "";
+                  completedActivities.push(type);
+                  updateCompletedList();
+                } else {
+                  setTimeout(nextQuestion, 800);
+                }
+              };
+              sc.appendChild(btt);
+            }
+          }
+          nextQuestion();
+        }
+      };
+
+      function showActivityHeader(type) {
+        const header = document.getElementById("activityHeader");
+        const emoji = document.getElementById("activityEmoji");
+        const name = document.getElementById("activityName");
+
+        const info = activityInfo[type];
+        if (info) {
+          emoji.textContent = info.emoji;
+          name.textContent = info.name;
+          header.classList.remove("hidden");
+        }
+      }
+
+      function updateCompletedList() {
+        const list = document.getElementById("completedList");
+        if (completedActivities.length === 0) {
+          list.innerHTML =
+            '<p class="text-gray-600">No activities yet - pick one above!</p>';
+        } else {
+          list.innerHTML = completedActivities
+            .map((activity) => {
+              const info = activityInfo[activity];
+              return `<div class="flex items-center gap-2 mb-2">
+                        <span>${info?.emoji || "✅"}</span>
+                        <span>${info?.name || activity}</span>
+                    </div>`;
+            })
+            .join("");
+        }
+      }
+
+      function handleKeyPress(event) {
+        if (event.key === "Enter") {
+          sendMessage();
+        }
+      }
+
+      // --- Guided session functions ---
+      function startGuidedSession() {
+        if (sessionActive) return;
+        sessionActive = true;
+        currentStep = -1;
+        const btn = document.getElementById("startSessionBtn");
+        if (btn) btn.setAttribute("aria-pressed", "true");
+        nextSessionStep();
+      }
+
+      function nextSessionStep() {
+        currentStep++;
+        if (currentStep >= sessionSteps.length) {
+          addMessage(
+            "assistant",
+            "Amazing! You completed the session — great job! 🎉"
+          );
+          sessionActive = false;
+          const btn = document.getElementById("startSessionBtn");
+          if (btn) btn.setAttribute("aria-pressed", "false");
+          const sc = document.getElementById("sessionControls");
+          if (sc) sc.innerHTML = "";
+          return;
+        }
+
+        const step = sessionSteps[currentStep];
+        addMessage("assistant", step.prompt);
+        showSessionControls(step);
+      }
+
+      function showSessionControls(step) {
+        const sc = document.getElementById("sessionControls");
+        if (!sc) return;
+        sc.innerHTML = "";
+
+        if (step.type === "choice" && Array.isArray(step.choices)) {
+          step.choices.forEach((choice) => {
+            const b = document.createElement("button");
+            b.className =
+              "px-4 py-2 rounded-full bg-indigo-500 text-white font-bold mr-2";
+            b.textContent = choice;
+            b.onclick = () => handleQuickAnswer(choice);
+            sc.appendChild(b);
+          });
+        } else {
+          const done = document.createElement("button");
+          done.className =
+            "px-4 py-2 rounded-full bg-green-500 text-white font-bold";
+          done.textContent = "Done";
+          done.onclick = () => handleQuickAnswer("done");
+          sc.appendChild(done);
+        }
+      }
+
+      function handleQuickAnswer(answer) {
+        addMessage("user", answer);
+        if (answer === "done") {
+          addMessage("assistant", "Yay! Great job! That was awesome. 🌟");
+        } else if (!Number.isNaN(Number(answer))) {
+          addMessage(
+            "assistant",
+            "Nice answer! You are great with numbers! 🎉"
+          );
+        } else {
+          addMessage("assistant", "Thanks for sharing! That was lovely. 💖");
+        }
+
+        // Small delay before moving to the next step to let the child read praise
+        setTimeout(nextSessionStep, 900);
+      }
+
+      // Expose functions globally so inline onclick handlers and external scripts
+      // can call them and the linter sees they're used. Wrap in try/catch so
+      // this file is still safe to run in non-browser test environments.
+      // Decorative sky scripts: randomized stars, occasional shooting stars,
+      // and subtle constellation fading. Runs in browser only.
+      (function setupSky() {
+        const starsLayer = document.querySelector(".stars");
+        const constellation = document.querySelector(".constellation");
+
+        // create many small stars at random positions
+        function createStars(container, count = 120) {
+          if (!container) return;
+          const frag = document.createDocumentFragment();
+          for (let i = 0; i < count; i++) {
+            const s = document.createElement("div");
+            s.className = "small-star";
+            const left = Math.random() * 100;
+            const top = Math.random() * 70; // avoid ground area
+            s.style.left = `${left}%`;
+            s.style.top = `${top}%`;
+            s.style.animationDelay = `${(Math.random() * 3).toFixed(2)}s`;
+            s.style.opacity = (0.6 + Math.random() * 0.4).toString();
+            frag.appendChild(s);
+          }
+          container.appendChild(frag);
+        }
+
+        function createShootingStar(container) {
+          if (!container) return;
+          const s = document.createElement("div");
+          s.className = "shooting-star";
+          // start somewhere on left-top area
+          const startLeft = Math.random() * 30; // 0-30%
+          const startTop = 5 + Math.random() * 30; // 5-35%
+          s.style.left = `${startLeft}%`;
+          s.style.top = `${startTop}%`;
+          // random rotation
+          s.style.transform = `rotate(${-20 - Math.random() * 40}deg)`;
+          container.appendChild(s);
+          // remove after animation
+          setTimeout(() => s.remove(), 1200);
+        }
+
+        if (starsLayer) {
+          // initial stars
+          createStars(starsLayer, 140);
+
+          // occasional shooting stars
+          setInterval(
+            () => {
+              if (Math.random() < 0.4) createShootingStar(starsLayer);
+            },
+            3000 + Math.random() * 2000
+          );
+        }
+
+        // gentle constellation fade to avoid being static
+        if (constellation) {
+          setInterval(
+            () => {
+              constellation.animate(
+                [{ opacity: 0.3 }, { opacity: 0.9 }, { opacity: 0.45 }],
+                {
+                  duration: 5000 + Math.random() * 4000,
+                  iterations: 1,
+                  easing: "ease-in-out"
+                }
+              );
+            },
+            6000 + Math.random() * 6000
+          );
+        }
+      })();
+
+      try {
+        window.startActivity = startActivity;
+      } catch (_e) {}
+      try {
+        window.handleKeyPress = handleKeyPress;
+      } catch (_e) {}
+      try {
+        window.startGuidedSession = startGuidedSession;
+      } catch (_e) {}
+    </script>
+  </body>
+</html>
