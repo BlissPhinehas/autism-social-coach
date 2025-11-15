@@ -310,3 +310,305 @@
     transform: rotate(360deg) scale(0.9);
   }
 }
+
+/* Starry night theme */
+.starry-sky {
+  background: radial-gradient(
+    circle at 10% 10%,
+    #1f3a70 0%,
+    #0b1220 50%,
+    #030612 100%
+  );
+  color: var(--color-white);
+  position: relative;
+  overflow: hidden;
+}
+
+/* ensure main content sits above decorative layers */
+.star-content {
+  position: relative;
+  z-index: 2;
+}
+
+.starry-sky .stars {
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(
+      1px 1px at 10% 20%,
+      rgba(255, 255, 255, 0.9) 50%,
+      transparent 51%
+    ),
+    radial-gradient(
+      1px 1px at 20% 40%,
+      rgba(255, 255, 255, 0.85) 50%,
+      transparent 51%
+    ),
+    radial-gradient(
+      1px 1px at 30% 15%,
+      rgba(255, 255, 255, 0.7) 50%,
+      transparent 51%
+    ),
+    radial-gradient(
+      1px 1px at 40% 60%,
+      rgba(255, 255, 255, 0.6) 50%,
+      transparent 51%
+    ),
+    radial-gradient(
+      1px 1px at 55% 30%,
+      rgba(255, 255, 255, 0.9) 50%,
+      transparent 51%
+    ),
+    radial-gradient(
+      1px 1px at 65% 80%,
+      rgba(255, 255, 255, 0.8) 50%,
+      transparent 51%
+    ),
+    radial-gradient(
+      1px 1px at 75% 50%,
+      rgba(255, 255, 255, 0.75) 50%,
+      transparent 51%
+    ),
+    radial-gradient(
+      1px 1px at 85% 25%,
+      rgba(255, 255, 255, 0.9) 50%,
+      transparent 51%
+    );
+  background-repeat: repeat;
+  background-size: 200px 200px;
+  animation: twinkle 6s linear infinite;
+  opacity: 0.95;
+  pointer-events: none;
+}
+
+@keyframes twinkle {
+  0%,
+  100% {
+    opacity: 0.9;
+    transform: translateY(0);
+  }
+  50% {
+    opacity: 1;
+    transform: translateY(-2px);
+  }
+}
+
+.starry-sky .moon {
+  position: absolute;
+  right: 8%;
+  top: 6%;
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at 35% 30%,
+    #fff 0%,
+    #f6f7e9 18%,
+    #e6e8d4 35%,
+    rgba(230, 232, 212, 0) 60%
+  );
+  box-shadow:
+    0 0 40px rgba(255, 240, 200, 0.18),
+    inset -8px -6px 18px rgba(200, 200, 200, 0.12);
+  filter: drop-shadow(0 6px 18px rgba(0, 0, 0, 0.4));
+  pointer-events: none;
+}
+
+.starry-sky .constellation {
+  position: absolute;
+  left: 6%;
+  top: 12%;
+  width: 280px;
+  height: 160px;
+  opacity: 0.8;
+  pointer-events: none;
+}
+
+.starry-sky .streetwalk {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 160px;
+  background: linear-gradient(
+    180deg,
+    rgba(3, 6, 12, 0) 0%,
+    rgba(2, 6, 12, 0.6) 40%,
+    rgba(2, 6, 12, 1) 100%
+  );
+  pointer-events: none;
+}
+
+.street-silhouette {
+  position: absolute;
+  left: 10%;
+  bottom: 18px;
+  width: 80%;
+  height: 120px;
+  background: linear-gradient(
+    90deg,
+    rgba(0, 0, 0, 0.85),
+    rgba(10, 10, 10, 0.95)
+  );
+  clip-path: polygon(
+    0 60%,
+    6% 60%,
+    6% 54%,
+    12% 54%,
+    12% 60%,
+    100% 60%,
+    100% 100%,
+    0% 100%
+  );
+}
+
+.bench {
+  position: absolute;
+  left: 18%;
+  bottom: 30px;
+  width: 120px;
+  height: 34px;
+  background: linear-gradient(180deg, #0b0b0b, #141414);
+  box-shadow: 0 6px 10px rgba(0, 0, 0, 0.6);
+}
+.bench::before {
+  content: "";
+  position: absolute;
+  left: 6px;
+  bottom: -18px;
+  width: 12px;
+  height: 36px;
+  background: #0b0b0b;
+}
+
+.lamp {
+  /* shooting star */
+  .shooting-star {
+    position: absolute;
+    width: 3px;
+    height: 3px;
+    border-radius: 50%;
+    background: linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0.98),
+      rgba(255, 220, 180, 0.9)
+    );
+    box-shadow:
+      0 0 8px rgba(255, 240, 200, 0.9),
+      0 0 20px rgba(255, 200, 120, 0.5);
+    transform: translate3d(0, 0, 0) rotate(-25deg);
+    pointer-events: none;
+    will-change: transform, opacity;
+    animation: shoot 900ms ease-out forwards;
+  }
+
+  @keyframes shoot {
+    0% {
+      opacity: 1;
+      transform: translate3d(0, 0, 0) scale(1);
+    }
+    70% {
+      opacity: 0.95;
+    }
+    100% {
+      opacity: 0;
+      transform: translate3d(800px, -300px, 0) scale(0.6);
+    }
+  }
+
+  /* small stars individual twinkle override */
+  .stars .small-star {
+    position: absolute;
+    width: 2px;
+    height: 2px;
+    border-radius: 50%;
+    background: white;
+    opacity: 0.9;
+    filter: drop-shadow(0 0 2px rgba(255, 255, 255, 0.9));
+    will-change: opacity, transform;
+    animation: star-twinkle 3s infinite ease-in-out;
+  }
+
+  @keyframes star-twinkle {
+    0% {
+      opacity: 0.6;
+      transform: scale(0.9);
+    }
+    50% {
+      opacity: 1;
+      transform: scale(1.15);
+    }
+    100% {
+      opacity: 0.6;
+      transform: scale(0.9);
+    }
+  }
+  position: absolute;
+  right: 18%;
+  bottom: 40px;
+  width: 6px;
+  height: 120px;
+  background: linear-gradient(180deg, #0b0b0b, #111111);
+}
+.lamp::after {
+  content: "";
+  position: absolute;
+  left: -28px;
+  top: -40px;
+  width: 80px;
+  height: 80px;
+  background: radial-gradient(
+    circle at 30% 30%,
+    rgba(255, 240, 200, 0.12) 0%,
+    rgba(255, 240, 200, 0.06) 30%,
+    rgba(255, 240, 200, 0) 60%
+  );
+  border-radius: 50%;
+  filter: blur(6px);
+}
+
+/* small subtle glow for streetlight */
+.lamp .glow {
+  position: absolute;
+  left: -22px;
+  top: -32px;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at 30% 30%,
+    rgba(255, 230, 160, 0.9),
+    rgba(255, 200, 100, 0.18) 35%,
+    rgba(255, 200, 100, 0.02) 60%
+  );
+  filter: blur(4px);
+}
+
+/* Inline SVG street layout styles: keep SVG positioned like the previous divs */
+.streetwalk .street-svg {
+  position: absolute;
+  left: 10%;
+  bottom: 0px;
+  width: 80%;
+  height: 160px;
+  pointer-events: none;
+  overflow: visible;
+}
+
+/* Make sure SVG groups use visible fills that match previous look */
+.streetwalk .street-svg .street-silhouette {
+  /* silhouette uses the gradient defined inside the SVG; ensure it sits above background */
+  mix-blend-mode: normal;
+}
+
+.streetwalk .street-svg .bench rect {
+  fill: #0b0b0b;
+}
+.streetwalk .street-svg .bench rect:nth-child(3) {
+  fill: #141414;
+}
+
+.streetwalk .street-svg .lamp .glow {
+  opacity: 0.95;
+  filter: blur(6px);
+}
