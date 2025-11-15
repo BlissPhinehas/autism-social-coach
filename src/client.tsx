@@ -1,7 +1,9 @@
+import "./styles.css";
+
 // Load the static HTML content directly
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener("DOMContentLoaded", () => {
   const appElement = document.getElementById("app")!;
-  
+
   // Replace the app content with your Forest Friend HTML
   appElement.innerHTML = `
     <div class="min-h-screen p-4 starry-sky">
@@ -23,7 +25,6 @@ document.addEventListener('DOMContentLoaded', () => {
         </svg>
       </div>
       <div class="streetwalk" aria-hidden="true">
-        <!-- Inline SVG for street silhouette, bench and lamp -->
         <svg class="street-svg" viewBox="0 0 1200 320" xmlns="http://www.w3.org/2000/svg" role="img" aria-hidden="true">
           <defs>
             <linearGradient id="gSilhouette" x1="0" x2="0" y1="0" y2="1">
@@ -36,9 +37,7 @@ document.addEventListener('DOMContentLoaded', () => {
               <stop offset="100%" stop-color="rgba(255,200,100,0)" />
             </radialGradient>
           </defs>
-          <!-- ground / silhouette -->
           <path class="street-silhouette" d="M0 200 C150 150 300 220 480 200 C600 185 760 210 920 190 C980 182 1100 200 1200 200 L1200 320 L0 320 Z" fill="url(#gSilhouette)" />
-          <!-- bench group -->
           <g class="bench" transform="translate(180,170) scale(1)">
             <rect x="0" y="0" width="160" height="18" rx="3" fill="#0b0b0b" />
             <g fill="#141414" opacity="0.95">
@@ -50,7 +49,6 @@ document.addEventListener('DOMContentLoaded', () => {
             <rect x="140" y="18" width="10" height="36" fill="#0b0b0b" />
             <rect x="6" y="-10" width="148" height="8" rx="2" fill="#111111" />
           </g>
-          <!-- lamp group -->
           <g class="lamp" transform="translate(820,32)">
             <rect x="22" y="28" width="6" height="200" fill="#0b0b0b" rx="2" />
             <g transform="translate(0,6)">
