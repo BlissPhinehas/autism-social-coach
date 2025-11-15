@@ -55,7 +55,6 @@ Consistent layout - Nothing moves around unexpectedly
 Simple animations - Fun but not overwhelming
 Clear visual progress - You can SEE yourself improving
 
-
 📊 Sample Conversation
 Forest Friend: Hi there! I'm your forest friend. What's your name?
 
@@ -65,18 +64,18 @@ Forest Friend: Nice to meet you, Tommy! How old are you?
 
 User: 8
 
-Forest Friend: Cool! I'm here to practice talking. 
-             Want to practice saying hello or talking about feelings?
+Forest Friend: Cool! I'm here to practice talking.
+Want to practice saying hello or talking about feelings?
 
 User: Saying hello
 
-Forest Friend: Great choice! Let's practice. 
-              Hello Tommy! How are you today?
+Forest Friend: Great choice! Let's practice.
+Hello Tommy! How are you today?
 
 User: Hello! I'm good
 
 Forest Friend: Awesome! You did a really good job saying hello back.
-              [🦊 Badge Earned: First Hello!]
+[🦊 Badge Earned: First Hello!]
 
 🚀 Running It Yourself
 If you want to run this for your own family member:
@@ -85,18 +84,21 @@ git clone https://github.com/YOUR-USERNAME/autism-social-coach.git
 cd autism-social-coach
 
 # Install stuff
+
 npm install
 
 # Login to Cloudflare (one-time setup)
+
 wrangler login
 
 # Test it locally
+
 wrangler dev
 
 # Deploy it
+
 wrangler deploy
 wrangler pages deploy frontend --project-name=forest-friends
-
 
 🌱 What's Next
 Ideas I'd like to add:
@@ -106,8 +108,6 @@ Voice option - Some kids prefer talking over typing
 Parent view - Let parents see weekly progress without interrupting practice
 Story mode - Practice conversations in the context of forest adventures
 Calming exercises - When things feel overwhelming, guided breathing with forest sounds
-
-
 
 - [`agents`](https://github.com/cloudflare/agents/blob/main/packages/agents/README.md)
 - [Cloudflare Agents Documentation](https://developers.cloudflare.com/agents/)

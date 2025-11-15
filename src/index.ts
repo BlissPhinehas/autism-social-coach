@@ -1,9 +1,25 @@
 import { SocialSkillsAgent } from "./agent";
 
+interface ChatBody {
+  sessionId?: string;
+  parentMode?: boolean;
+  message?: string;
+}
+
+interface ProgressBody {
+  sessionId?: string;
+}
+
+interface ExerciseBody {
+  exerciseType?: string;
+  sessionId?: string;
+}
+
 interface Env {
   SOCIAL_SKILLS_AGENT: DurableObjectNamespace;
-  AI: any;
-  ASSETS: any;
+  // Use unknown instead of any to avoid disabling type checks.
+  AI: unknown;
+  ASSETS: unknown;
 }
 
 export default {
@@ -24,8 +40,8 @@ export default {
     // API Routes
     if (url.pathname === "/api/chat") {
       try {
-        const body = (await request.json()) as any;
-        const { sessionId } = body;
+        const body = (await request.json()) as ChatBody;
+        const { sessionId } = body || {};
 
         // Get or create agent instance for this session
         const agentId = env.SOCIAL_SKILLS_AGENT.idFromName(
@@ -33,7 +49,7 @@ export default {
         );
         const agent = env.SOCIAL_SKILLS_AGENT.get(agentId);
 
-        // Call the agent's chat method
+        // Call the agent's chat method via the Durable Object's fetch
         const response = await agent.fetch(request);
         const result = await response.json();
 
@@ -59,8 +75,8 @@ export default {
 
     if (url.pathname === "/api/progress") {
       try {
-        const body = (await request.json()) as any;
-        const { sessionId } = body;
+        const body = (await request.json()) as ProgressBody;
+        const { sessionId } = body || {};
         const agentId = env.SOCIAL_SKILLS_AGENT.idFromName(
           sessionId || "default-session"
         );
@@ -91,16 +107,26 @@ export default {
 
     if (url.pathname === "/api/exercise") {
       try {
-        const body = (await request.json()) as any;
-        const { exerciseType, sessionId } = body;
+        const body = (await request.json()) as ExerciseBody;
+        const { exerciseType, sessionId } = body || {};
         const agentId = env.SOCIAL_SKILLS_AGENT.idFromName(
           sessionId || "default-session"
         );
-        const stub = env.SOCIAL_SKILLS_AGENT.get(agentId) as any;
+        const stub = env.SOCIAL_SKILLS_AGENT.get(
+          agentId
+        ) as DurableObjectStub & {
+          startActivity?: (t: string) => Promise<unknown>;
+        };
 
-        // Call startActivity method (Durable Object implementation may expose
-        // a custom method; cast to any to avoid TS complaints)
-        const result = await stub.startActivity(exerciseType);
+        // If the Durable Object exposes a startActivity method, call it; otherwise
+        // fall back to proxying the request to the Durable Object's fetch handler.
+        let result: unknown;
+        if (typeof stub.startActivity === "function") {
+          result = await stub.startActivity(exerciseType || "");
+        } else {
+          const resp = await stub.fetch(request);
+          result = await resp.json();
+        }
 
         return new Response(JSON.stringify(result), {
           headers: {
@@ -108,7 +134,7 @@ export default {
             ...corsHeaders
           }
         });
-      } catch (error) {
+      } catch (_error) {
         return new Response(
           JSON.stringify({ error: "Failed to start activity" }),
           {
@@ -136,15 +162,18 @@ export default {
       try {
         const resp = await fetch(pagesUrl, {
           headers: request.headers,
-          redirect: 'manual'
+          redirect: "manual"
         });
         // Return the fetched response directly (preserves content-type, etc.)
         return resp;
-      } catch (err) {
-        return new Response(JSON.stringify({ error: 'Failed to fetch frontend' }), {
-          status: 502,
-          headers: { 'Content-Type': 'application/json' }
-        });
+      } catch (_err) {
+        return new Response(
+          JSON.stringify({ error: "Failed to fetch frontend" }),
+          {
+            status: 502,
+            headers: { "Content-Type": "application/json" }
+          }
+        );
       }
     }
 

@@ -353,11 +353,13 @@
         // more interactive (append a friendly suffix or alternate phrasing).
         if (role === "assistant") {
           // find the last assistant bubble (justify-start)
-          const bubbles = Array.from(messagesDiv.querySelectorAll('.message-bubble'));
+          const bubbles = Array.from(
+            messagesDiv.querySelectorAll(".message-bubble")
+          );
           let lastAssistantText = null;
           for (let i = bubbles.length - 1; i >= 0; i--) {
             const el = bubbles[i];
-            if (el.className.includes('justify-start')) {
+            if (el.className.includes("justify-start")) {
               lastAssistantText = el.textContent && el.textContent.trim();
               break;
             }
@@ -370,7 +372,8 @@
               " That was lovely — what happened next?",
               " You're doing amazing!"
             ];
-            const suffix = variants[Math.floor(Math.random() * variants.length)];
+            const suffix =
+              variants[Math.floor(Math.random() * variants.length)];
             content = content + suffix;
           }
         }

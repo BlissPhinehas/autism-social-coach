@@ -19,30 +19,19 @@ interface ConversationState {
 }
 
 export class SocialSkillsAgent extends Agent {
-  // Keep state compatible with the base Agent type by using a permissive any
-  // instance property. This avoids incorrect visibility/override errors with
-  // the Agent base class while still allowing a structured default value.
-  // Use accessors to read/write the Agent's internal state so we don't
-  // conflict with the base class' `state` accessor definition.
-  public get state(): any {
-    return (this as any)._state;
+  // Use the ConversationState type for strong typing of agent state.
+  public get state(): ConversationState {
+    return (this as unknown as { _state?: ConversationState })
+      ._state as ConversationState;
   }
 
-  public set state(v: any) {
-    (this as any)._state = v;
+  public set state(v: ConversationState) {
+    (this as unknown as { _state?: ConversationState })._state = v;
   }
 
   async onStart() {
     const savedState = await this.loadState();
-    if (savedState) {
-      this.state = { ...this.state, ...savedState };
-    }
-  }
-
-  // Ensure default state shape to avoid crashes when properties are missing
-  constructor(...args: any[]) {
-    // @ts-ignore - delegate to base class
-    super(...args);
+    // initialize default shaped state if missing
     if (!this.state) {
       this.state = {
         childName: undefined,
@@ -53,6 +42,10 @@ export class SocialSkillsAgent extends Agent {
         lastInteraction: undefined,
         preferences: { lovesMath: false, interests: [] }
       };
+    }
+
+    if (savedState) {
+      this.state = { ...this.state, ...savedState };
     }
   }
 
@@ -103,7 +96,7 @@ export class SocialSkillsAgent extends Agent {
     if (!this.state.age) {
       const ageMatch = message.match(/(\d+)/);
       if (ageMatch) {
-        this.state.age = parseInt(ageMatch[1]);
+        this.state.age = parseInt(ageMatch[1], 10);
       }
     }
 
@@ -140,8 +133,8 @@ export class SocialSkillsAgent extends Agent {
     // replies so the model can avoid repeating itself verbatim.
     const recentAssistant = this.state.conversationHistory
       .slice(-4)
-      .filter((m: any) => m.role === "assistant")
-      .map((m: any) => m.content)
+      .filter((m) => m.role === "assistant")
+      .map((m) => m.content)
       .filter(Boolean);
 
     const repetitionHint = recentAssistant.length
@@ -151,21 +144,25 @@ export class SocialSkillsAgent extends Agent {
       : "";
 
     try {
-      const response = await this.env.AI.run("@cf/meta/llama-3.3-70b-instruct-fp8-fast", {
-        messages: [
-          { role: "system", content: systemPrompt + "\n" + repetitionHint },
-          ...conversationContext,
-          { role: "user", content: userMessage }
-        ],
-        // sampling params to make replies feel more 'chatty' and less repetitive
-        max_tokens: 280,
-        temperature: 0.9,
-        top_p: 0.95
-      });
+      const response = await this.env.AI.run(
+        "@cf/meta/llama-3.3-70b-instruct-fp8-fast",
+        {
+          messages: [
+            { role: "system", content: `${systemPrompt}\n${repetitionHint}` },
+            ...conversationContext,
+            { role: "user", content: userMessage }
+          ],
+          // sampling params to make replies feel more 'chatty' and less repetitive
+          max_tokens: 280,
+          temperature: 0.9,
+          top_p: 0.95
+        }
+      );
 
       // Normalize SDK response
       if (typeof response === "string") return response;
-      if ((response as any)?.response) return (response as any).response;
+      if ((response as unknown as { response?: unknown })?.response)
+        return String((response as unknown as { response?: unknown }).response);
       return String(response) || "That's great! What else?";
     } catch (error) {
       console.error("AI Error:", error);
@@ -195,9 +192,9 @@ export class SocialSkillsAgent extends Agent {
       activityContext = `Have a friendly conversation with ${childName}. Ask specific questions about their day, their interests, or what they're doing. Be warm and engaging like a caring friend.`;
     }
 
-  // Provide short examples and a persona to encourage dynamic responses and
-  // avoid the model falling into repeated patterns.
-  return `You are a patient, warm friend talking with ${childName}, who is ${age} years old and has autism.
+    // Provide short examples and a persona to encourage dynamic responses and
+    // avoid the model falling into repeated patterns.
+    return `You are a patient, warm friend talking with ${childName}, who is ${age} years old and has autism.
 
 CRITICAL RULES:
 - Use simple, concrete words. No idioms or sarcasm.
@@ -222,7 +219,7 @@ Tone: Like a kind teacher or loving parent - warm, clear, enthusiastic, patient.
   }
 
   private getRecentContext() {
-    return this.state.conversationHistory.slice(-8).map((msg: any) => ({
+    return this.state.conversationHistory.slice(-8).map((msg) => ({
       role: msg.role,
       content: msg.content
     }));
@@ -284,7 +281,7 @@ Tone: Like a kind teacher or loving parent - warm, clear, enthusiastic, patient.
     }
   }
 
-  private async getState(): Promise<any> {
+  private async getState(): Promise<ConversationState> {
     return this.state;
   }
 }
