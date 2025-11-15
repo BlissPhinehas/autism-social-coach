@@ -129,7 +129,9 @@ export default {
     // Worker (which has a valid TLS endpoint) and the Worker fetches the Pages
     // content from Cloudflare and returns it.
     if (request.method === "GET" && !url.pathname.startsWith("/api")) {
-      const pagesOrigin = "https://2891087f.autism-social-coach.pages.dev";
+      // Proxy to the currently published Pages site. Updated to the active
+      // deployment hostname so the Worker returns the same frontend.
+      const pagesOrigin = "https://9288a763.autism-social-coach.pages.dev";
       const pagesUrl = pagesOrigin + url.pathname + url.search;
       try {
         const resp = await fetch(pagesUrl, {
