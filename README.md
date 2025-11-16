@@ -1,118 +1,86 @@
-🌲 Forest Friends - Social Skills Helper
+````markdown
+# Autism Social Coach
 
-A safe place for kids to practice talking and making friends, built with love for my brother.
+A personalized social skills and learning assistant for children, built using Cloudflare Workers and AI models. This project was inspired by my brother, who is autistic, and aims to provide supportive, interactive, and engaging experiences for children through games, storytelling, praise, and emotional guidance.
 
-Live Demo: [[AI_BOT](https://autism-social-coach-frontend.pages.dev/)]
+---
 
-💚 Why I Built This
-I have a younger brother with autism, and watching him navigate social situations inspired me to create something that could help. He loves the color green and anything related to forests and nature.
-Sometimes, practicing conversations can feel stressful - worrying about saying the wrong thing or not understanding what someone means. I wanted to build a space where he (and other kids like him) could practice without any pressure. No judgment. No rush. Just a patient friend who's always there to listen and help.
-This app is my way of combining what I love (building things with code) with what matters most (helping my brother feel more confident talking with others).
+## Features
 
-🦊 What This Does
-Forest Friends is a chat app where kids can:
+- **Number Game** – Fun and simple math exercises that reward stars for correct answers.  
+- **Story Time** – Generates short child-friendly stories based on the child’s interests.  
+- **Morning Routine** – Encourages children to complete daily activities with positive reinforcement.  
+- **Feelings Support** – Helps children express their emotions and acknowledges them.  
+- **Praise System** – Rewards progress and good behavior with stars.  
 
-Practice saying hello - Learn different ways to greet people
-Talk about feelings - Put words to emotions in a safe way
-Ask questions - Get comfortable with back-and-forth conversations
-Share interests - Talk about things they love without feeling awkward
+---
 
-The app remembers progress and celebrates wins with fun forest badges. Every small step forward gets recognized because every step matters.
+## Tech Stack
 
-🎯 How It Helps Kids with Autism
-Kids on the spectrum often benefit from:
+- **Cloudflare Workers & Durable Objects** – For serverless stateful backend.  
+- **Llama 3.3 (Meta AI)** – Provides conversational responses and storytelling.  
+- **TypeScript** – For strong typing and maintainable code.  
+- **Vite** – For frontend bundling (if applicable).  
 
-Predictable patterns - The app responds consistently, no surprises
-Clear, simple language - No confusing idioms or sarcasm
-Visual feedback - Progress bars and badges show growth clearly
-Safe practice space - No real-world pressure, practice at your own pace
-Patience - The AI never gets tired or frustrated
+---
 
-My brother struggles with abstract language and unexpected changes in conversation. This app keeps things concrete and steady, which helps him feel more comfortable.
+## Getting Started
 
-🌳 The Forest Theme
-The green forest theme isn't just decoration - it's intentional. My brother finds nature calming, and green is his favorite color. When he's overwhelmed, going outside or looking at trees helps him reset.
-I wanted the app to feel like a peaceful walk in the woods - somewhere safe and familiar where he can be himself.
+1. Clone the repo:
 
-🛠️ How I Built It
-I used Cloudflare's platform because it met all the technical requirements for the assignment, but more importantly, it let me build something that actually works and can scale.
-Tech stack:
-
-Cloudflare Workers - Runs the backend
-Workers AI (Llama 3.3) - Powers the conversations
-Durable Objects - Remembers each kid's progress
-Cloudflare Pages - Hosts the forest-themed interface
-
-The AI is prompted specifically to use literal, simple language and avoid things that confuse kids with autism (like idioms, sarcasm, or abstract concepts).
-
-🎨 Design Choices
-Everything about the design considers how my brother (and kids like him) experience the world:
-
-Forest animals as progress icons - More engaging than generic checkmarks
-Green color palette - Calming and familiar
-Large, clear buttons - Easy to see and click
-Consistent layout - Nothing moves around unexpectedly
-Simple animations - Fun but not overwhelming
-Clear visual progress - You can SEE yourself improving
-
-📊 Sample Conversation
-Forest Friend: Hi there! I'm your forest friend. What's your name?
-
-User: Tommy
-
-Forest Friend: Nice to meet you, Tommy! How old are you?
-
-User: 8
-
-Forest Friend: Cool! I'm here to practice talking.
-Want to practice saying hello or talking about feelings?
-
-User: Saying hello
-
-Forest Friend: Great choice! Let's practice.
-Hello Tommy! How are you today?
-
-User: Hello! I'm good
-
-Forest Friend: Awesome! You did a really good job saying hello back.
-[🦊 Badge Earned: First Hello!]
-
-🚀 Running It Yourself
-If you want to run this for your own family member:
-bash# Clone it
-git clone https://github.com/YOUR-USERNAME/autism-social-coach.git
+```bash
+git clone https://github.com/your-username/autism-social-coach.git
 cd autism-social-coach
+````
 
-# Install stuff
+2. Install dependencies:
 
+```bash
 npm install
+```
 
-# Login to Cloudflare (one-time setup)
+3. Set environment variables:
 
-wrangler login
+```bash
+cp .dev.vars.example .dev.vars
+# then edit .dev.vars to include your AI keys
+```
 
-# Test it locally
+4. Build and type-check:
 
-wrangler dev
+```bash
+npx tsc --noEmit
+```
 
-# Deploy it
+5. Start the Worker locally:
 
-wrangler deploy
-wrangler pages deploy frontend --project-name=forest-friends
+```bash
+npm run dev
+```
 
-🌱 What's Next
-Ideas I'd like to add:
+---
 
-More forest animals - Different animals could teach different skills
-Voice option - Some kids prefer talking over typing
-Parent view - Let parents see weekly progress without interrupting practice
-Story mode - Practice conversations in the context of forest adventures
-Calming exercises - When things feel overwhelming, guided breathing with forest sounds
+## Live Demo
 
-- [`agents`](https://github.com/cloudflare/agents/blob/main/packages/agents/README.md)
-- [Cloudflare Agents Documentation](https://developers.cloudflare.com/agents/)
-- [Cloudflare Workers Documentation](https://developers.cloudflare.com/workers/)
+[https://autism-social-coach-frontend.pages.dev/]
+
+---
+
+## References
+
+* Starter template: [Cloudflare Agents Starter](https://github.com/cloudflare/agents-starter)
+* Cloudflare Workers logs and observability: [Workers Logs](https://developers.cloudflare.com/workers/observability/logs/workers-logs/)
+
+---
+
+## Why I Built This
+
+I decided to build this project because my brother is autistic. I wanted to create a safe and fun environment that encourages learning, emotional expression, and daily routine practice while giving positive reinforcement.
+
+---
 
 ## License
 
 MIT
+
+```
