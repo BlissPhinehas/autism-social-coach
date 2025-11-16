@@ -1,29 +1,24 @@
 {
-  "name": "autism-social-coach",
-  "main": "src/index.ts",
-  "compatibility_flags": ["nodejs_compat"],
-  "compatibility_date": "2024-11-01",
-  "ai": {
-    "binding": "AI"
-  },
-  "durable_objects": {
-    "bindings": [
-      {
-        "name": "SOCIAL_SKILLS_AGENT",
-        "class_name": "SocialSkillsAgent"
-      }
-    ]
-  },
-  // Serve the built static frontend from the `dist/client` folder so the
-  // worker can forward requests to the ASSETS binding. Wrangler will upload
-  // files from this bucket during deploy.
-  "site": {
-    "bucket": "dist/client"
-  },
-  "migrations": [
-    {
-      "tag": "v1",
-      "new_sqlite_classes": ["SocialSkillsAgent"]
-    }
-  ]
+	"name": "autism-social-coach",
+	"main": "src/index.ts",
+	"compatibility_date": "2024-05-30",
+	"assets": {
+		"directory": "./dist/client"
+	},
+	"durable_objects": {
+		"bindings": [
+			{
+				"name": "SOCIAL_SKILLS_AGENT",
+				"class_name": "SocialSkillsAgent"
+			}
+		]
+	},
+	"migrations": [
+		{
+			"tag": "v1",
+			"new_classes": [
+				"SocialSkillsAgent"
+			]
+		}
+	]
 }
